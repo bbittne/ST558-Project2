@@ -1,0 +1,19 @@
+---
+title: "ST558 - Project 2"
+author: "Li Wang & Bryan Bittner"
+date: "`r Sys.Date()`"
+output: 
+  github_document: default
+   
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(knitr)
+```
+
+# Introduction
