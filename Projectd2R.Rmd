@@ -17,3 +17,71 @@ library(knitr)
 ```
 
 # Introduction
+
+## Li
+
+# Data
+
+Use a relative path to import the data.
+
+```{r}
+newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
+newsData
+```
+
+Subset the data to work on the data channel of interest
+
+```{r}
+#Once we parameterize this file, part of the column name will be passed in as a parameter by the render code. I'm creating a separate field to handle this portion of the column name now and eventually we can just set the parameter to this field and the rest should work.
+
+#Parameter Name will eventually go here instead of "lifestyle"
+paramColumnNameType<-"lifestyle"
+columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
+
+#According to dplyr help, to refer to column names stored as string, use the '.data' pronoun.
+#https://dplyr.tidyverse.org/reference/filter.html
+newsDataSubset <- filter(newsData,.data[[columnName]] == 1)
+newsDataSubset
+```
+
+## Summarizations
+
+You should produce some basic (but meaningful) summary statistics and plots about the training data you are working with (especially as it relates to your response - aka the 'shares' field)
+
+
+Start with the basic summary statistics for the 'shares' field.
+```{r}
+summary(newsDataSubset$shares)
+```
+
+Now lets show the Mean, Median, Variance, and Standard Deviation. Notice the Variance and Standard Deviation are both extremely high. This might be something we will have to investigate further
+```{r}
+newsDataSubset %>% summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
+```
+
+Looking at the different columns in the dataset, there are two that stand out. Generally speaking, people probably aren't going to look at articles that don't have images or videos. Here are the summary stats for the articles grouped on the number of images in the article.
+
+```{r}
+newsDataSubset %>% group_by(num_imgs) %>%
+summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
+```
+
+Here are the summary stats for articles with videos.
+```{r}
+newsDataSubset %>% group_by(num_videos) %>%
+summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
+```
+
+Insert additional graphs and stats here....
+
+# Modeling
+
+## Random Forest Model and Explanation - Bryan
+
+## Boosted Tree Model and Explanation - Li
+
+## Linear Regression Explanation - Bryan
+
+# Comparison
+
+# Automation
