@@ -12,21 +12,43 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
+```
+
+
+# Load Packages
+
+We will use the following packages:
+
+```{r}
+library(httr)
+library(jsonlite)
+library(readr)
+library(dplyr)
+library(plyr)
+library(tidyr)
+library(ggplot2)
 library(tidyverse)
+library(lubridate)
 library(knitr)
 ```
 
+
 # Introduction
 
-## Li
+This data set summarizes a heterogeneous set of features about articles published by Mashable in a period of two years. 
+
+Our target variable is the shares variable, and predict variables are global_rate_positive_words, global_rate_negative_words, n_tokens_title and so on. 
+
+The purpose of our analysis is to predict the number of shares in social networks (popularity). In this project, we produce some basic (but meaningful) summary statistics and plots about the training data, and fit a linear regression model and an ensemble tree-based model for predicting the number of shares.
+
 
 # Data
 
 Use a relative path to import the data.
 
 ```{r}
-newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
-newsData
+newsData<-read_csv(file="../ST558-Project2/OnlineNewsPopularity.csv")
+head(newsData)
 ```
 
 Subset the data to work on the data channel of interest
@@ -41,7 +63,10 @@ columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
 #According to dplyr help, to refer to column names stored as string, use the '.data' pronoun.
 #https://dplyr.tidyverse.org/reference/filter.html
 newsDataSubset <- filter(newsData,.data[[columnName]] == 1)
-newsDataSubset
+
+# remove data_channel_is_entertainment,data_channel_is_bus, data_channel_is_socmed ,data_channel_is_tech,data_channel_is_world columns.
+newsDataSubset<-newsDataSubset%>%select(-c(15:19))
+head(newsDataSubset)
 ```
 
 ## Summarizations
@@ -72,7 +97,13 @@ newsDataSubset %>% group_by(num_videos) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-Insert additional graphs and stats here....
+A scatter plot with the number of shares on the y-axis and n_tokens_title on the x-axis is created:
+
+```{r}
+g <- ggplot(newsDataSubset, aes(x = n_tokens_title, y = shares))
+g + geom_point()
+```
+
 
 # Modeling
 
