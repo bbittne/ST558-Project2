@@ -23,13 +23,11 @@ We will use the following packages:
 library(httr)
 library(jsonlite)
 library(readr)
-library(dplyr)
-library(plyr)
-library(tidyr)
-library(ggplot2)
 library(tidyverse)
 library(lubridate)
 library(knitr)
+library(caret)
+library(randomForest)
 ```
 
 
@@ -48,6 +46,7 @@ Use a relative path to import the data.
 
 ```{r}
 newsData<-read_csv(file="../ST558-Project2/OnlineNewsPopularity.csv")
+#newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
 head(newsData)
 ```
 
