@@ -266,6 +266,8 @@ mlrAllFit
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
+Add additional regression model(s) here.
+
 ## Random Forest Model
 
 The Random Forest Model is an example of an ensemble based model.
@@ -304,12 +306,6 @@ randomForestFit
     ##   7879.523  0.01318217  3160.918
     ## 
     ## Tuning parameter 'mtry' was held constant at a value of 18.66667
-
-Random Forest - Confusion Matrix
-
-``` r
-#confusionMatrix(data=newsDataSubsetTest$shares, reference=predict(randomForestFit,newdata=newsDataSubsetTest))
-```
 
 ## Boosted Tree Model and Explanation - Li
 

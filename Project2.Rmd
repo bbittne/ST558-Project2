@@ -145,6 +145,8 @@ mlrAllFit <- train(shares ~ .,
 mlrAllFit
 ```
 
+Add additional regression model(s) here.
+
 ## Random Forest Model
 
 The Random Forest Model is an example of an ensemble based model. Instead of traditional decision trees, ensemble methods average across the tree. This will greatly increase our prediction power, but it will come at the expense of the easy interpretation from traditional decision trees. The Random Forest based model will not use all available predictors. Instead it will take a random subset of the predictors for each tree fit and calculate the model fit for that subset. It will repeat the process a pre-determined number of times and automatically pick the best predictors for the model. This will end up creating a reduction in the overall model variance.
@@ -160,11 +162,6 @@ randomForestFit <- train(shares ~ .,
 randomForestFit
 ```
 
-Random Forest - Confusion Matrix
-
-```{r}
-#confusionMatrix(data=newsDataSubsetTest$shares, reference=predict(randomForestFit,newdata=newsDataSubsetTest))
-```
 
 ## Boosted Tree Model and Explanation - Li
 
