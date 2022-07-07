@@ -13,6 +13,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
+
 ```{r,eval=FALSE}
 rmarkdown::render("Project2.Rmd", 
                   output_format = "github_document",
@@ -20,6 +21,8 @@ rmarkdown::render("Project2.Rmd",
                   output_options = list(html_preview= FALSE,toc=TRUE,toc_depth=2,toc_float=TRUE)
 )
 ```
+
+
 # Load Packages
 
 We will use the following packages:
@@ -271,19 +274,6 @@ mlrFit <- train(shares ~ num_imgs + num_videos,
 mlrFit
 ```
 
-For the first linear model example, we can try a model using just the num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg as our predictors. 
-
-```{r}
-set.seed(111)
-#Fit a  multiple linear regression model with num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg. 
-mlrInteractionFit <- train(shares ~ num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg, 
-                data = newsDataSubsetTrain, 
-                method="lm",
-                trControl=trainControl(method="cv",number=5))
-mlrInteractionFit
-```
-
-
 Next we can try a linear model using all of the fields as a predictor variables.
 
 ```{r}
@@ -295,6 +285,19 @@ mlrAllFit <- train(shares ~ .,
                 trControl=trainControl(method="cv",number=5))
 mlrAllFit
 ```
+
+Try a model using just the num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg as our predictors. 
+
+```{r}
+set.seed(111)
+#Fit a  multiple linear regression model with num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg. 
+mlrInteractionFit <- train(shares ~ num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg, 
+                data = newsDataSubsetTrain, 
+                method="lm",
+                trControl=trainControl(method="cv",number=5))
+mlrInteractionFit
+```
+
 
 ## Random Forest Model
 
@@ -331,7 +334,7 @@ BoostedTreeFit
 
 # Comparison
 
-All the models are compared with RMSE on the test set
+All the models are compared by RMSE on the test set
 
 ```{r}
 #compute RMSE of MlrFit
@@ -339,15 +342,15 @@ mlrFitPred <- predict(mlrFit, newdata = newsDataSubsetTest)
 MlrFit<-postResample(mlrFitPred, newsDataSubsetTest$shares)
 MlrFit.RMSE<-MlrFit[1]
 
-#compute RMSE of MlrInterFit
-mlrInteractionFitPred <- predict(mlrInteractionFit, newdata = newsDataSubsetTest)
-MlrInterFit<-postResample(mlrInteractionFitPred, newsDataSubsetTest$shares)
-MlrInterFit.RMSE<-MlrInterFit[1]
-
 #compute RMSE of MlrAllFit
 MlrAllFitPred <- predict(mlrAllFit, newdata = newsDataSubsetTest)
 MlrAllFit<-postResample(MlrAllFitPred, newsDataSubsetTest$shares)
 MlrAllFit.RMSE<-MlrAllFit[1]
+
+#compute RMSE of MlrInterFit
+mlrInteractionFitPred <- predict(mlrInteractionFit, newdata = newsDataSubsetTest)
+MlrInterFit<-postResample(mlrInteractionFitPred, newsDataSubsetTest$shares)
+MlrInterFit.RMSE<-MlrInterFit[1]
 
 #compute RMSE of RandomForest
 ForestPred <- predict(randomForestFit, newdata = newsDataSubsetTest)
@@ -360,7 +363,7 @@ BoostedTree<-postResample(BoostPred, newsDataSubsetTest$shares)
 BoostedTree.RMSE<-BoostedTree[1]
 
 #Compare Root MSE values
-c(MlrFit=MlrFit.RMSE,MlrInterFit=MlrInterFit.RMSE,MlrAllFit=MlrAllFit.RMSE,RandomForest=RandomForest.RMSE,BoostedTree=BoostedTree.RMSE)
+c(MlrFit=MlrFit.RMSE,MlrAllFit=MlrAllFit.RMSE,MlrInterFit=MlrInterFit.RMSE,RandomForest=RandomForest.RMSE,BoostedTree=BoostedTree.RMSE)
 ```
 
 From the above compare, we can see the smallest RMSE is 8288.572 which belong to RandomForest. Therefore, we will choose the Random Forest Model.
