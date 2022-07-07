@@ -3,6 +3,14 @@ ST558 - Project 2
 Li Wang & Bryan Bittner
 2022-07-07
 
+``` r
+rmarkdown::render("Project2.Rmd", 
+                  output_format = "github_document",
+                  output_file = "README.md",
+                  output_options = list(html_preview= FALSE,toc=TRUE,toc_depth=2,toc_float=TRUE)
+)
+```
+
 # Load Packages
 
 We will use the following packages:
@@ -286,7 +294,7 @@ g <- ggplot(newsDataSubset, aes(x = n_tokens_title, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_title")
 ```
 
-![](Project2_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](Project2_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 From the above plot, we can see that the most shares is with 6-15 words
 in the title. Therefore, we will keep n\_tokens\_title variable.
@@ -299,7 +307,7 @@ g <- ggplot(newsDataSubset, aes(x = publishing_day, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 ```
 
-![](Project2_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](Project2_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 From the above plot, we can see that the best popular articles are
 usually posted on Monday, Tuesday, and Wednesday. Articles is less
@@ -314,7 +322,7 @@ g <- ggplot(newsDataSubset, aes(x = rate_positive_words, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
 ```
 
-![](Project2_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](Project2_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 From the above plot, we can see that the best popular articles are with
 0.5-0.9 rate\_positive\_words. Therefore, the variable
@@ -328,7 +336,7 @@ g <- ggplot(newsDataSubset, aes(x = n_tokens_content, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
 ```
 
-![](Project2_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](Project2_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 From the above plot, we can see that the number of words in the article
 less than 1500 words are with good shares. The lesser the better.
@@ -343,7 +351,7 @@ g <- ggplot(newsDataSubset, aes(x = average_token_length, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS average_token_length")
 ```
 
-![](Project2_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](Project2_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 From the above plot, we can see that the almost shares are with 4-6
 length word. Therefore, the variable average\_token\_length effect to
@@ -357,7 +365,7 @@ corr=cor(newsDataSubset1, method = c("spearman"))
 corrplot(corr,tl.cex=0.5)
 ```
 
-![](Project2_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](Project2_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 By the above correlation matrix plot, we can see these variables are
 strongly correlated:
