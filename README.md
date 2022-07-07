@@ -8,12 +8,10 @@ Li Wang & Bryan Bittner
 -   [Data](#data)
     -   [Summarizations](#summarizations)
 -   [Modeling](#modeling)
-    -   [Random Forest Model and Explanation -
-        Bryan](#random-forest-model-and-explanation---bryan)
+    -   [Linear Regression Model](#linear-regression-model)
+    -   [Random Forest Model](#random-forest-model)
     -   [Boosted Tree Model and Explanation -
         Li](#boosted-tree-model-and-explanation---li)
-    -   [Linear Regression Explanation -
-        Bryan](#linear-regression-explanation---bryan)
 -   [Comparison](#comparison)
 -   [Automation](#automation)
 
@@ -170,11 +168,150 @@ g + geom_point()
 
 # Modeling
 
-## Random Forest Model and Explanation - Bryan
+Before we do any modeling, lets set up our Train/Test split. This will
+allow us to determine the model fit using a subset of data called
+Training, while saving the remainder of the data called Test to test our
+model predictions with.
+
+``` r
+set.seed(10)
+train <- sample(1:nrow(newsDataSubset),size=nrow(newsDataSubset)*.7)
+test <- dplyr::setdiff(1:nrow(newsDataSubset),train)
+
+newsDataSubsetTrain <- newsDataSubset[train,]
+newsDataSubsetTest <- newsDataSubset[test,]
+
+head(newsDataSubsetTrain)
+```
+
+    ## # A tibble: 6 × 56
+    ##   url                timedelta n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_uniq… num_hrefs
+    ##   <chr>                  <dbl>          <dbl>            <dbl>           <dbl>            <dbl>            <dbl>     <dbl>
+    ## 1 http://mashable.c…       622             11              308           0.564             1.00            0.728         8
+    ## 2 http://mashable.c…       652              9              457           0.494             1.00            0.688         5
+    ## 3 http://mashable.c…       235             14              121           0.783             1.00            0.929         6
+    ## 4 http://mashable.c…       192             12              823           0.447             1.00            0.602        10
+    ## 5 http://mashable.c…       243             10             1316           0.426             1.00            0.614        14
+    ## 6 http://mashable.c…       152             12              691           0.423             1.00            0.613        15
+    ## # … with 48 more variables: num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>, average_token_length <dbl>,
+    ## #   num_keywords <dbl>, data_channel_is_lifestyle <dbl>, kw_min_min <dbl>, kw_max_min <dbl>, kw_avg_min <dbl>,
+    ## #   kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>, kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>,
+    ## #   self_reference_min_shares <dbl>, self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>,
+    ## #   weekday_is_monday <dbl>, weekday_is_tuesday <dbl>, weekday_is_wednesday <dbl>, weekday_is_thursday <dbl>,
+    ## #   weekday_is_friday <dbl>, weekday_is_saturday <dbl>, weekday_is_sunday <dbl>, is_weekend <dbl>, LDA_00 <dbl>,
+    ## #   LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>, global_subjectivity <dbl>, global_sentiment_polarity <dbl>, …
+
+## Linear Regression Model
+
+A Linear Regression Model is the first model type we will look at. These
+models are an intuitive way to investigate the linear relation between
+multiple variables. These models make the estimation procedure simple
+and easy to understand. Linear Regression models can come in all
+different shapes and sizes and can be used to model more than just a
+straight linear relationship. Regression models can be modified with
+interactive and or higher order terms that will conform to a more
+complex relationship.
+
+For the first linear model example, we can try a model using just the
+“num_imgs” and “num_videos” as our predictors.
+
+``` r
+#Fit a  multiple linear regression model with Temperature and Season
+mlrFit <- train(shares ~ num_imgs + num_videos, 
+                data = newsDataSubsetTrain, 
+                method="lm",
+                trControl=trainControl(method="cv",number=5))
+mlrFit
+```
+
+    ## Linear Regression 
+    ## 
+    ## 1469 samples
+    ##    2 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (5 fold) 
+    ## Summary of sample sizes: 1176, 1174, 1176, 1174, 1176 
+    ## Resampling results:
+    ## 
+    ##   RMSE      Rsquared     MAE     
+    ##   8515.114  0.003603234  3287.381
+    ## 
+    ## Tuning parameter 'intercept' was held constant at a value of TRUE
+
+Next we can try a linear model using all of the fields as a predictor
+variables.
+
+``` r
+#Fit a  multiple linear regression model with Temperature and Season
+mlrAllFit <- train(shares ~ ., 
+                data = newsDataSubsetTrain, 
+                method="lm",
+                trControl=trainControl(method="cv",number=5))
+mlrAllFit
+```
+
+    ## Linear Regression 
+    ## 
+    ## 1469 samples
+    ##   55 predictor
+    ## 
+    ## No pre-processing
+    ## Resampling: Cross-Validated (5 fold) 
+    ## Summary of sample sizes: 1174, 1177, 1175, 1175, 1175 
+    ## Resampling results:
+    ## 
+    ##   RMSE      Rsquared  MAE     
+    ##   9004.098  NaN       3001.381
+    ## 
+    ## Tuning parameter 'intercept' was held constant at a value of TRUE
+
+## Random Forest Model
+
+The Random Forest Model is an example of an ensemble based model.
+Instead of traditional decision trees, ensemble methods average across
+the tree. This will greatly increase our prediction power, but it will
+come at the expense of the easy interpretation from traditional decision
+trees. The Random Forest based model will not use all available
+predictors. Instead it will take a random subset of the predictors for
+each tree fit and calculate the model fit for that subset. It will
+repeat the process a pre-determined number of times and automatically
+pick the best predictors for the model. This will end up creating a
+reduction in the overall model variance.
+
+``` r
+#Regression Tree so use mtry=# predictors/3
+randomForestFit <- train(shares ~ ., 
+                         data = newsDataSubsetTrain, 
+                         method="rf",
+                         preProcess=c("center","scale"),
+                         trControl=trainControl(method="cv",number=5),
+                         tuneGrid=data.frame(mtry=ncol(newsDataSubsetTrain)/3))
+randomForestFit
+```
+
+    ## Random Forest 
+    ## 
+    ## 1469 samples
+    ##   55 predictor
+    ## 
+    ## Pre-processing: centered (1522), scaled (1522) 
+    ## Resampling: Cross-Validated (5 fold) 
+    ## Summary of sample sizes: 1174, 1176, 1175, 1175, 1176 
+    ## Resampling results:
+    ## 
+    ##   RMSE      Rsquared    MAE     
+    ##   7879.523  0.01318217  3160.918
+    ## 
+    ## Tuning parameter 'mtry' was held constant at a value of 18.66667
+
+Random Forest - Confusion Matrix
+
+``` r
+#confusionMatrix(data=newsDataSubsetTest$shares, reference=predict(randomForestFit,newdata=newsDataSubsetTest))
+```
 
 ## Boosted Tree Model and Explanation - Li
-
-## Linear Regression Explanation - Bryan
 
 # Comparison
 

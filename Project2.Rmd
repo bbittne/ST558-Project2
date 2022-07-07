@@ -106,11 +106,69 @@ g + geom_point()
 
 # Modeling
 
-## Random Forest Model and Explanation - Bryan
+Before we do any modeling, lets set up our Train/Test split. This will allow us to determine the model fit using a subset of data called Training, while saving the remainder of the data called Test to test our model predictions with.
+
+```{r}
+set.seed(10)
+train <- sample(1:nrow(newsDataSubset),size=nrow(newsDataSubset)*.7)
+test <- dplyr::setdiff(1:nrow(newsDataSubset),train)
+
+newsDataSubsetTrain <- newsDataSubset[train,]
+newsDataSubsetTest <- newsDataSubset[test,]
+
+head(newsDataSubsetTrain)
+```
+
+## Linear Regression Model
+
+A Linear Regression Model is the first model type we will look at. These models are an intuitive way to investigate the linear relation between multiple variables. These models make the estimation procedure simple and easy to understand. Linear Regression models can come in all different shapes and sizes and can be used to model more than just a straight linear relationship. Regression models can be modified with interactive and or higher order terms that will conform to a more complex relationship.
+
+For the first linear model example, we can try a model using just the "num_imgs" and "num_videos" as our predictors. 
+
+```{r}
+#Fit a  multiple linear regression model with Temperature and Season
+mlrFit <- train(shares ~ num_imgs + num_videos, 
+                data = newsDataSubsetTrain, 
+                method="lm",
+                trControl=trainControl(method="cv",number=5))
+mlrFit
+```
+
+Next we can try a linear model using all of the fields as a predictor variables.
+
+```{r}
+#Fit a  multiple linear regression model with Temperature and Season
+mlrAllFit <- train(shares ~ ., 
+                data = newsDataSubsetTrain, 
+                method="lm",
+                trControl=trainControl(method="cv",number=5))
+mlrAllFit
+```
+
+## Random Forest Model
+
+The Random Forest Model is an example of an ensemble based model. Instead of traditional decision trees, ensemble methods average across the tree. This will greatly increase our prediction power, but it will come at the expense of the easy interpretation from traditional decision trees. The Random Forest based model will not use all available predictors. Instead it will take a random subset of the predictors for each tree fit and calculate the model fit for that subset. It will repeat the process a pre-determined number of times and automatically pick the best predictors for the model. This will end up creating a reduction in the overall model variance.
+
+```{r}
+#Regression Tree so use mtry=# predictors/3
+randomForestFit <- train(shares ~ ., 
+                         data = newsDataSubsetTrain, 
+                         method="rf",
+                         preProcess=c("center","scale"),
+                         trControl=trainControl(method="cv",number=5),
+                         tuneGrid=data.frame(mtry=ncol(newsDataSubsetTrain)/3))
+randomForestFit
+```
+
+Random Forest - Confusion Matrix
+
+```{r}
+#confusionMatrix(data=newsDataSubsetTest$shares, reference=predict(randomForestFit,newdata=newsDataSubsetTest))
+```
 
 ## Boosted Tree Model and Explanation - Li
 
-## Linear Regression Explanation - Bryan
+
 
 # Comparison
 
