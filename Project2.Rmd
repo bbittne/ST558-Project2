@@ -13,14 +13,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
-```{r render, eval=FALSE,message=FALSE,error=FALSE}
-rmarkdown::render("../ST558-Project2/Project2.Rmd", 
-                  output_format = "github_document",
-                  output_file = "README.md",
-                  output_options = list(html_preview= FALSE,toc=TRUE,toc_depth=2,toc_float=TRUE)
-)
-```
-
 # Load Packages
 
 We will use the following packages:
@@ -75,8 +67,7 @@ The purpose of our analysis is to predict the number of shares in social network
 Use a relative path to import the data.
 
 ```{r}
-newsData<-read_csv(file="../ST558-Project2/OnlineNewsPopularity.csv")
-#newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
+newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
 head(newsData)
 ```
 

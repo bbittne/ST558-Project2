@@ -3,14 +3,6 @@ ST558 - Project 2
 Li Wang & Bryan Bittner
 2022-07-07
 
-``` r
-rmarkdown::render("../ST558-Project2/Project2.Rmd", 
-                  output_format = "github_document",
-                  output_file = "README.md",
-                  output_options = list(html_preview= FALSE,toc=TRUE,toc_depth=2,toc_float=TRUE)
-)
-```
-
 # Load Packages
 
 We will use the following packages:
@@ -64,8 +56,7 @@ predicting the number of shares.
 Use a relative path to import the data.
 
 ``` r
-newsData<-read_csv(file="../ST558-Project2/OnlineNewsPopularity.csv")
-#newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
+newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
 head(newsData)
 ```
 
