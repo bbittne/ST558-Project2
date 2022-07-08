@@ -26,8 +26,6 @@ rmarkdown::render("Project2.Rmd",
 ```
 
 
-
-
 # Load Packages
 
 We will use the following packages:
@@ -85,13 +83,16 @@ newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
 head(newsData)
 ```
 
-Subset the data to work on the data channel of lifestyle
+Subset the data. If running the reports by an automated parameter driven process, the report will automatically use the parameter passed into this report. If running the report manually without a parameter, the data will subset to the 'lifestyle' news channel.
 
 ```{r}
-#Once we parameterize this file, part of the column name will be passed in as a parameter by the render code. I'm creating a separate field to handle this portion of the column name now and eventually we can just set the parameter to this field and the rest should work.
+#Read the parameter being passed in to the automated report
+if (params$columnNames != "") {
+  paramColumnNameType<-params$columnNames
+}else{
+  paramColumnNameType<-"lifestyle"
+}
 
-#Parameter Name will eventually go here instead of "lifestyle"
-paramColumnNameType<-params$columnNames
 columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
 
 #According to dplyr help, to refer to column names stored as string, use the '.data' pronoun.
@@ -99,7 +100,7 @@ columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
 newsDataSubset <- filter(newsData,.data[[columnName]] == 1)
 ```
 
-Merging the weekdays columns channels as one single column named publishing_day
+Merging the weekdays columns channels as one single column named publishing_day.
 
 ```{r}
 # Merging the weekdays columns channels as one single column named publishing_day
@@ -120,6 +121,7 @@ Here we drop some non-preditive variables: url,value,timedelta,data_channel_is_l
 
 ```{r}
 newsDataSubset<-newsDataSubset%>%select(-c(1,2,4,16:21,34))
+newsDataSubset
 ```
 
 ## Summarizations
@@ -254,7 +256,7 @@ newsDataSubset2<-select(newsDataSubset,-abs_title_sentiment_polarity, -abs_title
 Before we do any modeling, lets set up our Train/Test split. This will allow us to determine the model fit using a subset of data called Training, while saving the remainder of the data called Test to test our model predictions with.
 
 ```{r}
-set.seed(10)
+set.seed(111)
 train <- sample(1:nrow(newsDataSubset2),size=nrow(newsDataSubset2)*0.7)
 test <- dplyr::setdiff(1:nrow(newsDataSubset2),train)
 
@@ -374,6 +376,10 @@ From the above compare, we can see the smallest RMSE is 8288.572 which belong to
 
 
 # Automation
+
+Below is a chuck of code that can be used to automate the reports. In order to automate this project, the first thing we do is build a set of parameters. These parameters match up with the column names from the full news dataset. The program with read the parameter and subset the data down to only values with the specified news channel name that is in the parameter. 
+
+To automate the project for all of the different news channels, simply execute the code chunk below directly to the console. Separate .md files will then be created for each news channel type.
 
 ``` Automation
 #Add column names

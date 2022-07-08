@@ -1,7 +1,18 @@
 ST558 - Project 2
 ================
 Li Wang & Bryan Bittner
-2022-07-07
+2022-07-08
+
+-   [Load Packages](#load-packages)
+-   [Introduction](#introduction)
+-   [Data](#data)
+    -   [Summarizations](#summarizations)
+-   [Modeling](#modeling)
+    -   [Linear Regression Model](#linear-regression-model)
+    -   [Random Forest Model](#random-forest-model)
+    -   [Boosted Tree Model](#boosted-tree-model)
+-   [Comparison](#comparison)
+-   [Automation](#automation)
 
 ``` r
 rmarkdown::render("Project2.Rmd", 
@@ -86,13 +97,19 @@ head(newsData)
     ## #   self_reference_avg_sharess <dbl>, weekday_is_monday <dbl>, weekday_is_tuesday <dbl>, weekday_is_wednesday <dbl>,
     ## #   weekday_is_thursday <dbl>, weekday_is_friday <dbl>, weekday_is_saturday <dbl>, weekday_is_sunday <dbl>, …
 
-Subset the data to work on the data channel of lifestyle
+Subset the data. If running the reports by an automated parameter driven
+process, the report will automatically use the parameter passed into
+this report. If running the report manually without a parameter, the
+data will subset to the ‘lifestyle’ news channel.
 
 ``` r
-#Once we parameterize this file, part of the column name will be passed in as a parameter by the render code. I'm creating a separate field to handle this portion of the column name now and eventually we can just set the parameter to this field and the rest should work.
+#Read the parameter being passed in to the automated report
+if (params$columnNames != "") {
+  paramColumnNameType<-params$columnNames
+}else{
+  paramColumnNameType<-"lifestyle"
+}
 
-#Parameter Name will eventually go here instead of "lifestyle"
-paramColumnNameType<-params$columnNames
 columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
 
 #According to dplyr help, to refer to column names stored as string, use the '.data' pronoun.
@@ -101,7 +118,7 @@ newsDataSubset <- filter(newsData,.data[[columnName]] == 1)
 ```
 
 Merging the weekdays columns channels as one single column named
-publishing_day
+publishing_day.
 
 ``` r
 # Merging the weekdays columns channels as one single column named publishing_day
@@ -143,7 +160,29 @@ columns,is_weekend. They won’t contribute anything.
 
 ``` r
 newsDataSubset<-newsDataSubset%>%select(-c(1,2,4,16:21,34))
+newsDataSubset
 ```
+
+    ## # A tibble: 7,057 × 46
+    ##    publishing_day n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_unique_tokens num_hrefs
+    ##    <fct>                   <dbl>            <dbl>           <dbl>            <dbl>                    <dbl>     <dbl>
+    ##  1 monday                     12              219           0.664             1.00                    0.815         4
+    ##  2 monday                      9              531           0.504             1.00                    0.666         9
+    ##  3 monday                     14              194           0.765             1.00                    0.840         4
+    ##  4 monday                     12              161           0.669             1.00                    0.752         5
+    ##  5 monday                     11              454           0.566             1.00                    0.755         5
+    ##  6 monday                     12              177           0.741             1.00                    0.823         4
+    ##  7 monday                      5              356           0.618             1.00                    0.766         3
+    ##  8 tuesday                    11              281           0.611             1.00                    0.766         5
+    ##  9 tuesday                    10              909           0.450             1.00                    0.670         3
+    ## 10 wednesday                  10              413           0.606             1.00                    0.729         6
+    ## # … with 7,047 more rows, and 39 more variables: num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>,
+    ## #   average_token_length <dbl>, num_keywords <dbl>, kw_min_min <dbl>, kw_max_min <dbl>, kw_avg_min <dbl>,
+    ## #   kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>, kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>,
+    ## #   self_reference_min_shares <dbl>, self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>, LDA_00 <dbl>,
+    ## #   LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>, global_subjectivity <dbl>, global_sentiment_polarity <dbl>,
+    ## #   global_rate_positive_words <dbl>, global_rate_negative_words <dbl>, rate_positive_words <dbl>,
+    ## #   rate_negative_words <dbl>, avg_positive_polarity <dbl>, min_positive_polarity <dbl>, max_positive_polarity <dbl>, …
 
 ## Summarizations
 
@@ -409,7 +448,7 @@ Training, while saving the remainder of the data called Test to test our
 model predictions with.
 
 ``` r
-set.seed(10)
+set.seed(111)
 train <- sample(1:nrow(newsDataSubset2),size=nrow(newsDataSubset2)*0.7)
 test <- dplyr::setdiff(1:nrow(newsDataSubset2),train)
 
@@ -448,11 +487,11 @@ mlrFit
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 3951, 3952, 3951, 3952, 3950 
+    ## Summary of sample sizes: 3950, 3952, 3951, 3952, 3951 
     ## Resampling results:
     ## 
-    ##   RMSE      Rsquared      MAE     
-    ##   8267.729  0.0007606064  3016.052
+    ##   RMSE      Rsquared     MAE     
+    ##   7523.604  0.002479554  2827.279
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
@@ -476,11 +515,11 @@ mlrAllFit
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 3951, 3952, 3951, 3952, 3950 
+    ## Summary of sample sizes: 3950, 3952, 3951, 3952, 3951 
     ## Resampling results:
     ## 
     ##   RMSE      Rsquared    MAE     
-    ##   8587.281  0.00785254  3026.723
+    ##   7685.046  0.01254769  2800.747
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
@@ -504,11 +543,11 @@ mlrInteractionFit
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 3951, 3952, 3951, 3952, 3950 
+    ## Summary of sample sizes: 3950, 3952, 3951, 3952, 3951 
     ## Resampling results:
     ## 
     ##   RMSE      Rsquared    MAE     
-    ##   8241.041  0.04909721  3019.604
+    ##   7449.128  0.07254646  2839.191
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
@@ -543,11 +582,11 @@ randomForestFit
     ## 
     ## Pre-processing: centered (25), scaled (25) 
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 3951, 3952, 3951, 3952, 3950 
+    ## Summary of sample sizes: 3950, 3952, 3951, 3952, 3951 
     ## Resampling results:
     ## 
     ##   RMSE      Rsquared    MAE     
-    ##   8402.627  0.02059002  3145.555
+    ##   7567.518  0.02639887  2939.883
     ## 
     ## Tuning parameter 'mtry' was held constant at a value of 7
 
@@ -585,19 +624,19 @@ BoostedTreeFit
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 3951, 3952, 3951, 3952, 3950 
+    ## Summary of sample sizes: 3950, 3952, 3951, 3952, 3951 
     ## Resampling results across tuning parameters:
     ## 
-    ##   interaction.depth  n.trees  RMSE      Rsquared     MAE     
-    ##   1                   50      8327.268  0.008882165  2996.150
-    ##   1                  100      8326.622  0.013233010  2976.489
-    ##   1                  150      8352.619  0.012115012  2999.736
-    ##   2                   50      8251.351  0.021054165  2983.752
-    ##   2                  100      8294.176  0.022565561  2969.365
-    ##   2                  150      8332.043  0.022256811  2985.815
-    ##   3                   50      8347.938  0.014640051  3015.464
-    ##   3                  100      8441.147  0.014186709  3052.890
-    ##   3                  150      8497.309  0.014546035  3071.068
+    ##   interaction.depth  n.trees  RMSE      Rsquared    MAE     
+    ##   1                   50      7536.192  0.02095129  2794.361
+    ##   1                  100      7485.272  0.02316693  2768.809
+    ##   1                  150      7522.601  0.02173638  2768.037
+    ##   2                   50      7425.677  0.03712411  2761.437
+    ##   2                  100      7449.526  0.03675335  2776.668
+    ##   2                  150      7521.257  0.03247155  2792.890
+    ##   3                   50      7501.474  0.02857567  2794.342
+    ##   3                  100      7572.383  0.02705559  2830.249
+    ##   3                  150      7655.950  0.03040151  2854.005
     ## 
     ## Tuning parameter 'shrinkage' was held constant at a value of 0.1
     ## Tuning parameter 'n.minobsinnode' was held constant at
@@ -640,13 +679,24 @@ c(MlrFit=MlrFit.RMSE,MlrAllFit=MlrAllFit.RMSE,MlrInterFit=MlrInterFit.RMSE,Rando
 ```
 
     ##       MlrFit.RMSE    MlrAllFit.RMSE  MlrInterFit.RMSE RandomForest.RMSE  BoostedTree.RMSE 
-    ##          6201.567          6137.215          6184.491          6315.260          6245.760
+    ##          8383.521          8354.387          8415.130          8378.740          8418.274
 
 From the above compare, we can see the smallest RMSE is 8288.572 which
 belong to RandomForest. Therefore, we will choose the Random Forest
 Model.
 
 # Automation
+
+Below is a chuck of code that can be used to automate the reports. In
+order to automate this project, the first thing we do is build a set of
+parameters. These parameters match up with the column names from the
+full news dataset. The program with read the parameter and subset the
+data down to only values with the specified news channel name that is in
+the parameter.
+
+To automate the project for all of the different news channels, simply
+execute the code chunk below directly to the console. Separate .md files
+will then be created for each news channel type.
 
 ``` automation
 #Add column names
