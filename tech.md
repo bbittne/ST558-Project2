@@ -3,17 +3,6 @@ ST558 - Project 2
 Li Wang & Bryan Bittner
 2022-07-07
 
--   [Load Packages](#load-packages)
--   [Introduction](#introduction)
--   [Data](#data)
-    -   [Summarizations](#summarizations)
--   [Modeling](#modeling)
-    -   [Linear Regression Model](#linear-regression-model)
-    -   [Random Forest Model](#random-forest-model)
-    -   [Boosted Tree Model](#boosted-tree-model)
--   [Comparison](#comparison)
--   [Automation](#automation)
-
 ``` r
 rmarkdown::render("Project2.Rmd", 
                   output_format = "github_document",
@@ -27,6 +16,7 @@ rmarkdown::render("Project2.Rmd",
 We will use the following packages:
 
 ``` r
+library(rmarkdown)
 library(httr)
 library(jsonlite)
 library(readr)
@@ -102,7 +92,7 @@ Subset the data to work on the data channel of lifestyle
 #Once we parameterize this file, part of the column name will be passed in as a parameter by the render code. I'm creating a separate field to handle this portion of the column name now and eventually we can just set the parameter to this field and the rest should work.
 
 #Parameter Name will eventually go here instead of "lifestyle"
-paramColumnNameType<-"lifestyle"
+paramColumnNameType<-params$columnNames
 columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
 
 #According to dplyr help, to refer to column names stored as string, use the '.data' pronoun.
@@ -131,12 +121,12 @@ head(newsDataSubset)
     ## # A tibble: 6 × 56
     ##   url     value publishing_day timedelta n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_uniq…
     ##   <chr>   <dbl> <fct>              <dbl>          <dbl>            <dbl>           <dbl>            <dbl>            <dbl>
-    ## 1 http:/…     1 monday               731              8              960           0.418             1.00            0.550
-    ## 2 http:/…     1 monday               731             10              187           0.667             1.00            0.800
-    ## 3 http:/…     1 monday               731             11              103           0.689             1.00            0.806
-    ## 4 http:/…     1 monday               731             10              243           0.619             1.00            0.824
-    ## 5 http:/…     1 monday               731              8              204           0.586             1.00            0.698
-    ## 6 http:/…     1 monday               731             11              315           0.551             1.00            0.702
+    ## 1 http:/…     1 monday               731             13             1072           0.416             1.00            0.541
+    ## 2 http:/…     1 monday               731             10              370           0.560             1.00            0.698
+    ## 3 http:/…     1 monday               731             12              989           0.434             1.00            0.572
+    ## 4 http:/…     1 monday               731             11               97           0.670             1.00            0.837
+    ## 5 http:/…     1 monday               731              8             1207           0.411             1.00            0.549
+    ## 6 http:/…     1 monday               731             13             1248           0.391             1.00            0.523
     ## # … with 47 more variables: num_hrefs <dbl>, num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>,
     ## #   average_token_length <dbl>, num_keywords <dbl>, data_channel_is_lifestyle <dbl>, data_channel_is_entertainment <dbl>,
     ## #   data_channel_is_bus <dbl>, data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>, data_channel_is_world <dbl>,
@@ -165,53 +155,53 @@ Start with the data structure and basic summary statistics for the
 str(newsDataSubset)
 ```
 
-    ## tibble [2,099 × 46] (S3: tbl_df/tbl/data.frame)
-    ##  $ publishing_day              : Factor w/ 7 levels "friday","monday",..: 2 2 2 2 2 2 2 2 6 7 ...
-    ##  $ n_tokens_title              : num [1:2099] 8 10 11 10 8 11 10 6 12 11 ...
-    ##  $ n_tokens_content            : num [1:2099] 960 187 103 243 204 315 1190 374 499 223 ...
-    ##  $ n_unique_tokens             : num [1:2099] 0.418 0.667 0.689 0.619 0.586 ...
-    ##  $ n_non_stop_words            : num [1:2099] 1 1 1 1 1 ...
-    ##  $ n_non_stop_unique_tokens    : num [1:2099] 0.55 0.8 0.806 0.824 0.698 ...
-    ##  $ num_hrefs                   : num [1:2099] 21 7 3 1 7 4 25 7 14 5 ...
-    ##  $ num_self_hrefs              : num [1:2099] 20 0 1 1 2 4 24 0 1 3 ...
-    ##  $ num_imgs                    : num [1:2099] 20 1 1 0 1 1 20 1 1 0 ...
-    ##  $ num_videos                  : num [1:2099] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ average_token_length        : num [1:2099] 4.65 4.66 4.84 4.38 4.67 ...
-    ##  $ num_keywords                : num [1:2099] 10 7 6 10 8 10 8 8 10 6 ...
-    ##  $ kw_min_min                  : num [1:2099] 0 0 0 0 0 0 0 0 217 217 ...
-    ##  $ kw_max_min                  : num [1:2099] 0 0 0 0 0 0 0 0 1500 1900 ...
-    ##  $ kw_avg_min                  : num [1:2099] 0 0 0 0 0 ...
-    ##  $ kw_min_max                  : num [1:2099] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_max_max                  : num [1:2099] 0 0 0 0 0 0 0 0 17100 17100 ...
-    ##  $ kw_avg_max                  : num [1:2099] 0 0 0 0 0 ...
-    ##  $ kw_min_avg                  : num [1:2099] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_max_avg                  : num [1:2099] 0 0 0 0 0 ...
-    ##  $ kw_avg_avg                  : num [1:2099] 0 0 0 0 0 ...
-    ##  $ self_reference_min_shares   : num [1:2099] 545 0 5000 0 0 6200 545 0 1300 6700 ...
-    ##  $ self_reference_max_shares   : num [1:2099] 16000 0 5000 0 0 6200 16000 0 1300 16700 ...
-    ##  $ self_reference_avg_sharess  : num [1:2099] 3151 0 5000 0 0 ...
-    ##  $ LDA_00                      : num [1:2099] 0.0201 0.0286 0.4374 0.02 0.2115 ...
-    ##  $ LDA_01                      : num [1:2099] 0.1147 0.0286 0.2004 0.02 0.0255 ...
-    ##  $ LDA_02                      : num [1:2099] 0.02 0.0286 0.0335 0.02 0.0251 ...
-    ##  $ LDA_03                      : num [1:2099] 0.02 0.0287 0.0334 0.02 0.0251 ...
-    ##  $ LDA_04                      : num [1:2099] 0.825 0.885 0.295 0.92 0.713 ...
-    ##  $ global_subjectivity         : num [1:2099] 0.514 0.477 0.424 0.518 0.652 ...
-    ##  $ global_sentiment_polarity   : num [1:2099] 0.268 0.15 0.118 0.156 0.317 ...
-    ##  $ global_rate_positive_words  : num [1:2099] 0.0802 0.0267 0.0291 0.0494 0.0735 ...
-    ##  $ global_rate_negative_words  : num [1:2099] 0.01667 0.0107 0.00971 0.02058 0.0049 ...
-    ##  $ rate_positive_words         : num [1:2099] 0.828 0.714 0.75 0.706 0.938 ...
-    ##  $ rate_negative_words         : num [1:2099] 0.172 0.2857 0.25 0.2941 0.0625 ...
-    ##  $ avg_positive_polarity       : num [1:2099] 0.402 0.435 0.278 0.333 0.422 ...
-    ##  $ min_positive_polarity       : num [1:2099] 0.1 0.2 0.0333 0.1364 0.1 ...
-    ##  $ max_positive_polarity       : num [1:2099] 1 0.7 0.5 0.6 1 0.5 1 0.8 0.5 0.5 ...
-    ##  $ avg_negative_polarity       : num [1:2099] -0.224 -0.263 -0.125 -0.177 -0.4 ...
-    ##  $ min_negative_polarity       : num [1:2099] -0.5 -0.4 -0.125 -0.312 -0.4 ...
-    ##  $ max_negative_polarity       : num [1:2099] -0.05 -0.125 -0.125 -0.125 -0.4 -0.125 -0.05 -0.05 -0.1 -0.1 ...
-    ##  $ title_subjectivity          : num [1:2099] 0 0 0.857 0 0 ...
-    ##  $ title_sentiment_polarity    : num [1:2099] 0 0 -0.714 0 0 ...
-    ##  $ abs_title_subjectivity      : num [1:2099] 0.5 0.5 0.357 0.5 0.5 ...
-    ##  $ abs_title_sentiment_polarity: num [1:2099] 0 0 0.714 0 0 ...
-    ##  $ shares                      : num [1:2099] 556 1900 5700 462 3600 343 507 552 1200 1900 ...
+    ## tibble [7,346 × 46] (S3: tbl_df/tbl/data.frame)
+    ##  $ publishing_day              : Factor w/ 7 levels "friday","monday",..: 2 2 2 2 2 2 2 2 2 2 ...
+    ##  $ n_tokens_title              : num [1:7346] 13 10 12 11 8 13 11 8 8 12 ...
+    ##  $ n_tokens_content            : num [1:7346] 1072 370 989 97 1207 ...
+    ##  $ n_unique_tokens             : num [1:7346] 0.416 0.56 0.434 0.67 0.411 ...
+    ##  $ n_non_stop_words            : num [1:7346] 1 1 1 1 1 ...
+    ##  $ n_non_stop_unique_tokens    : num [1:7346] 0.541 0.698 0.572 0.837 0.549 ...
+    ##  $ num_hrefs                   : num [1:7346] 19 2 20 2 24 21 20 5 5 22 ...
+    ##  $ num_self_hrefs              : num [1:7346] 19 2 20 0 24 19 20 2 3 22 ...
+    ##  $ num_imgs                    : num [1:7346] 20 0 20 0 42 20 20 1 1 28 ...
+    ##  $ num_videos                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ average_token_length        : num [1:7346] 4.68 4.36 4.62 4.86 4.72 ...
+    ##  $ num_keywords                : num [1:7346] 7 9 9 7 8 10 7 10 9 9 ...
+    ##  $ kw_min_min                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_max_min                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_avg_min                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_min_max                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_max_max                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_avg_max                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_min_avg                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_max_avg                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ kw_avg_avg                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ self_reference_min_shares   : num [1:7346] 545 8500 545 0 545 545 545 924 2500 545 ...
+    ##  $ self_reference_max_shares   : num [1:7346] 16000 8500 16000 0 16000 16000 16000 924 2500 16000 ...
+    ##  $ self_reference_avg_sharess  : num [1:7346] 3151 8500 3151 0 2830 ...
+    ##  $ LDA_00                      : num [1:7346] 0.0286 0.0222 0.0222 0.4583 0.025 ...
+    ##  $ LDA_01                      : num [1:7346] 0.0288 0.3067 0.1507 0.029 0.0252 ...
+    ##  $ LDA_02                      : num [1:7346] 0.0286 0.0222 0.2434 0.0287 0.025 ...
+    ##  $ LDA_03                      : num [1:7346] 0.0286 0.0222 0.0222 0.0297 0.025 ...
+    ##  $ LDA_04                      : num [1:7346] 0.885 0.627 0.561 0.454 0.9 ...
+    ##  $ global_subjectivity         : num [1:7346] 0.514 0.437 0.543 0.539 0.539 ...
+    ##  $ global_sentiment_polarity   : num [1:7346] 0.281 0.0712 0.2986 0.1611 0.2883 ...
+    ##  $ global_rate_positive_words  : num [1:7346] 0.0746 0.0297 0.0839 0.0309 0.0696 ...
+    ##  $ global_rate_negative_words  : num [1:7346] 0.0121 0.027 0.0152 0.0206 0.0116 ...
+    ##  $ rate_positive_words         : num [1:7346] 0.86 0.524 0.847 0.6 0.857 ...
+    ##  $ rate_negative_words         : num [1:7346] 0.14 0.476 0.153 0.4 0.143 ...
+    ##  $ avg_positive_polarity       : num [1:7346] 0.411 0.351 0.428 0.567 0.427 ...
+    ##  $ min_positive_polarity       : num [1:7346] 0.0333 0.1364 0.1 0.4 0.1 ...
+    ##  $ max_positive_polarity       : num [1:7346] 1 0.6 1 0.8 1 1 1 0.35 1 1 ...
+    ##  $ avg_negative_polarity       : num [1:7346] -0.22 -0.195 -0.243 -0.125 -0.227 ...
+    ##  $ min_negative_polarity       : num [1:7346] -0.5 -0.4 -0.5 -0.125 -0.5 -0.5 -0.5 -0.2 -0.5 -0.5 ...
+    ##  $ max_negative_polarity       : num [1:7346] -0.05 -0.1 -0.05 -0.125 -0.05 -0.05 -0.05 -0.05 -0.125 -0.05 ...
+    ##  $ title_subjectivity          : num [1:7346] 0.455 0.643 1 0.125 0.5 ...
+    ##  $ title_sentiment_polarity    : num [1:7346] 0.136 0.214 0.5 0 0 ...
+    ##  $ abs_title_subjectivity      : num [1:7346] 0.0455 0.1429 0.5 0.375 0 ...
+    ##  $ abs_title_sentiment_polarity: num [1:7346] 0.136 0.214 0.5 0 0 ...
+    ##  $ shares                      : num [1:7346] 505 855 891 3600 17100 2800 445 783 1500 1800 ...
 
 ``` r
 # data summary
@@ -219,7 +209,7 @@ summary(newsDataSubset$shares)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##      28    1100    1700    3682    3250  208300
+    ##      36    1100    1700    3072    3000  663600
 
 Now lets show the Mean, Median, Variance, and Standard Deviation. Notice
 the Variance and Standard Deviation are both extremely high. This might
@@ -232,7 +222,7 @@ newsDataSubset %>% summarise(avg = mean(shares), med = median(shares), var = var
     ## # A tibble: 1 × 4
     ##     avg   med       var    sd
     ##   <dbl> <dbl>     <dbl> <dbl>
-    ## 1 3682.  1700 78943534. 8885.
+    ## 1 3072.  1700 81438781. 9024.
 
 Looking at the different columns in the dataset, there are two that
 stand out. Generally speaking, people probably aren’t going to look at
@@ -244,20 +234,20 @@ newsDataSubset %>% group_by(num_imgs) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-    ## # A tibble: 46 × 5
-    ##    num_imgs   avg   med       var    sd
-    ##       <dbl> <dbl> <dbl>     <dbl> <dbl>
-    ##  1        0 3412.  1600 28214771. 5312.
-    ##  2        1 3505.  1500 93048735. 9646.
-    ##  3        2 3684.  1500 78338969. 8851.
-    ##  4        3 2765.  1700  8254428. 2873.
-    ##  5        4 2878.  1450 21072041. 4590.
-    ##  6        5 4399.  1850 71679990. 8466.
-    ##  7        6 3166.  1500 22453761. 4739.
-    ##  8        7 3307.  2250  7191557. 2682.
-    ##  9        8 2809.  1800 11789849. 3434.
-    ## 10        9 3825.  2100 34583426. 5881.
-    ## # … with 36 more rows
+    ## # A tibble: 50 × 5
+    ##    num_imgs   avg   med        var     sd
+    ##       <dbl> <dbl> <dbl>      <dbl>  <dbl>
+    ##  1        0 3175.  1600  24201679.  4920.
+    ##  2        1 2934.  1600 152110830. 12333.
+    ##  3        2 2634.  1700  12536736.  3541.
+    ##  4        3 3736.  2000  48908930.  6993.
+    ##  5        4 3386.  2050  16358661.  4045.
+    ##  6        5 3578.  2150  16276897.  4034.
+    ##  7        6 2767.  1900  11810336.  3437.
+    ##  8        7 3296.  2100  18709143.  4325.
+    ##  9        8 2897.  1900  16928235.  4114.
+    ## 10        9 3149.  1800  17617309.  4197.
+    ## # … with 40 more rows
 
 As we can see from the above table, the largest avg of shares is with 27
 images, and the least avg of shares is with 23 images. Therefore, the
@@ -270,27 +260,28 @@ newsDataSubset %>% group_by(num_videos) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-    ## # A tibble: 18 × 5
-    ##    num_videos     avg    med        var     sd
-    ##         <dbl>   <dbl>  <dbl>      <dbl>  <dbl>
-    ##  1          0   3539.   1700  69852475.  8358.
-    ##  2          1   3694.   1700  30530526.  5525.
-    ##  3          2   3102.   1800  14805400.  3848.
-    ##  4          3   4190.   1800  41021110.  6405.
-    ##  5          4   4796.   2000  35265460.  5938.
-    ##  6          5   5650.   1450 117552386. 10842.
-    ##  7          6  12475    7050 124409167. 11154.
-    ##  8          7   9033    7050  99351823.  9968.
-    ##  9          8    978.   1000     18196.   135.
-    ## 10          9   3950    3950  16245000   4031.
-    ## 11         10   2154.   1500   2250928.  1500.
-    ## 12         11   2480    2500    537000    733.
-    ## 13         12   4400    4400   8000000   2828.
-    ## 14         15 196700  196700        NA     NA 
-    ## 15         21  19800   19800        NA     NA 
-    ## 16         26   2300    2300        NA     NA 
-    ## 17         28    660     660        NA     NA 
-    ## 18         50    932     932        NA     NA
+    ## # A tibble: 19 × 5
+    ##    num_videos    avg   med        var     sd
+    ##         <dbl>  <dbl> <dbl>      <dbl>  <dbl>
+    ##  1          0  2719.  1600  15661163.  3957.
+    ##  2          1  3865.  1800 303101909. 17410.
+    ##  3          2  4005.  2050  52060752.  7215.
+    ##  4          3  5830.  2600 154981025. 12449.
+    ##  5          4  3253.  2300   7104112.  2665.
+    ##  6          5  2525   2600    676429.   822.
+    ##  7          6  5938.  3100 106457580. 10318.
+    ##  8          7  3610   2200   8012111.  2831.
+    ##  9          8 12580  12300 123267000  11103.
+    ## 10          9  3606.  1600  16383637.  4048.
+    ## 11         10  2968.  1200  14572490.  3817.
+    ## 12         11  4054.  1600  41132248.  6413.
+    ## 13         12  1800   1800        NA     NA 
+    ## 14         14 38900  38900        NA     NA 
+    ## 15         15   751    751        NA     NA 
+    ## 16         17  8400   8400  79380000   8910.
+    ## 17         25  1400   1400        NA     NA 
+    ## 18         59  1600   1600        NA     NA 
+    ## 19         73   757    757        NA     NA
 
 As we can see from the above table, the largest avg of shares is with 15
 videos, and the least avg of shares is with 28 videos Therefore, the
@@ -304,7 +295,7 @@ g <- ggplot(newsDataSubset, aes(x = n_tokens_title, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_title")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](tech_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 From the above plot, we can see that the most shares is with 6-15 words
 in the title. Therefore, we will keep n_tokens_title variable.
@@ -317,7 +308,7 @@ g <- ggplot(newsDataSubset, aes(x = publishing_day, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](tech_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 From the above plot, we can see that the best popular articles are
 usually posted on Monday, Tuesday, and Wednesday. Articles is less
@@ -332,7 +323,7 @@ g <- ggplot(newsDataSubset, aes(x = rate_positive_words, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](tech_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 From the above plot, we can see that the best popular articles are with
 0.5-0.9 rate_positive_words. Therefore, the variable rate_positive_words
@@ -346,7 +337,7 @@ g <- ggplot(newsDataSubset, aes(x = n_tokens_content, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](tech_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 From the above plot, we can see that the number of words in the article
 less than 1500 words are with good shares. The lesser the better.
@@ -361,7 +352,7 @@ g <- ggplot(newsDataSubset, aes(x = average_token_length, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS average_token_length")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](tech_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 From the above plot, we can see that the almost shares are with 4-6
 length word. Therefore, the variable average_token_length effect to
@@ -375,7 +366,7 @@ corr=cor(newsDataSubset1, method = c("spearman"))
 corrplot(corr,tl.cex=0.5)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](tech_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 By the above correlation matrix plot, we can see these variables are
 strongly correlated:
@@ -460,16 +451,16 @@ mlrFit
 
     ## Linear Regression 
     ## 
-    ## 1469 samples
+    ## 5142 samples
     ##    2 predictor
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 1176, 1175, 1175, 1175, 1175 
+    ## Summary of sample sizes: 4113, 4115, 4113, 4114, 4113 
     ## Resampling results:
     ## 
     ##   RMSE      Rsquared    MAE     
-    ##   8442.397  0.01074566  3265.257
+    ##   8020.861  0.01053914  2464.649
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
@@ -488,16 +479,16 @@ mlrAllFit
 
     ## Linear Regression 
     ## 
-    ## 1469 samples
+    ## 5142 samples
     ##   20 predictor
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 1176, 1175, 1175, 1175, 1175 
+    ## Summary of sample sizes: 4113, 4115, 4113, 4114, 4113 
     ## Resampling results:
     ## 
     ##   RMSE      Rsquared    MAE     
-    ##   8525.723  0.01807429  3378.043
+    ##   8067.599  0.01108742  2500.433
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
@@ -516,16 +507,16 @@ mlrInteractionFit
 
     ## Linear Regression 
     ## 
-    ## 1469 samples
+    ## 5142 samples
     ##    3 predictor
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 1176, 1175, 1175, 1175, 1175 
+    ## Summary of sample sizes: 4113, 4115, 4113, 4114, 4113 
     ## Resampling results:
     ## 
     ##   RMSE      Rsquared    MAE     
-    ##   8354.156  0.04734726  3224.819
+    ##   8002.202  0.01384299  2436.028
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
@@ -555,16 +546,16 @@ randomForestFit
 
     ## Random Forest 
     ## 
-    ## 1469 samples
+    ## 5142 samples
     ##   20 predictor
     ## 
     ## Pre-processing: centered (25), scaled (25) 
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 1176, 1175, 1175, 1175, 1175 
+    ## Summary of sample sizes: 4113, 4115, 4113, 4114, 4113 
     ## Resampling results:
     ## 
-    ##   RMSE      Rsquared   MAE     
-    ##   8670.817  0.0111052  3467.567
+    ##   RMSE      Rsquared    MAE     
+    ##   8349.436  0.02004736  2533.203
     ## 
     ## Tuning parameter 'mtry' was held constant at a value of 7
 
@@ -597,30 +588,30 @@ BoostedTreeFit
 
     ## Stochastic Gradient Boosting 
     ## 
-    ## 1469 samples
+    ## 5142 samples
     ##   20 predictor
     ## 
     ## No pre-processing
     ## Resampling: Cross-Validated (5 fold) 
-    ## Summary of sample sizes: 1176, 1175, 1175, 1175, 1175 
+    ## Summary of sample sizes: 4113, 4115, 4113, 4114, 4113 
     ## Resampling results across tuning parameters:
     ## 
     ##   interaction.depth  n.trees  RMSE      Rsquared     MAE     
-    ##   1                   50      8553.839  0.004174850  3320.360
-    ##   1                  100      8585.949  0.003195921  3324.953
-    ##   1                  150      8626.315  0.002903646  3356.430
-    ##   2                   50      8624.924  0.003051487  3353.743
-    ##   2                  100      8801.265  0.001636004  3420.545
-    ##   2                  150      8846.642  0.001514202  3463.288
-    ##   3                   50      8649.577  0.003997526  3334.704
-    ##   3                  100      8814.812  0.004254153  3435.088
-    ##   3                  150      8897.995  0.002385789  3496.943
+    ##   1                   50      8131.353  0.003308177  2462.628
+    ##   1                  100      8126.349  0.003545105  2470.037
+    ##   1                  150      8118.728  0.003919035  2475.589
+    ##   2                   50      8129.891  0.012010450  2439.713
+    ##   2                  100      8099.564  0.016347404  2421.560
+    ##   2                  150      8181.796  0.011798585  2440.855
+    ##   3                   50      8206.022  0.013248031  2453.001
+    ##   3                  100      8169.441  0.015037317  2445.301
+    ##   3                  150      8266.781  0.013362099  2471.129
     ## 
     ## Tuning parameter 'shrinkage' was held constant at a value of 0.1
     ## Tuning parameter 'n.minobsinnode' was held constant at
     ##  a value of 10
     ## RMSE was used to select the optimal model using the smallest value.
-    ## The final values used for the model were n.trees = 50, interaction.depth = 1, shrinkage = 0.1 and n.minobsinnode = 10.
+    ## The final values used for the model were n.trees = 100, interaction.depth = 2, shrinkage = 0.1 and n.minobsinnode = 10.
 
 # Comparison
 
@@ -657,10 +648,36 @@ c(MlrFit=MlrFit.RMSE,MlrAllFit=MlrAllFit.RMSE,MlrInterFit=MlrInterFit.RMSE,Rando
 ```
 
     ##       MlrFit.RMSE    MlrAllFit.RMSE  MlrInterFit.RMSE RandomForest.RMSE  BoostedTree.RMSE 
-    ##          8288.807          8308.389          8306.922          8288.572          8323.004
+    ##          4597.337          4662.399          4582.122          4776.837          5581.831
 
 From the above compare, we can see the smallest RMSE is 8288.572 which
 belong to RandomForest. Therefore, we will choose the Random Forest
 Model.
 
 # Automation
+
+``` automation
+#Add column names
+columnNames <- data.frame("lifestyle","entertainment","bus","socmed","tech","world")
+
+#Create filenames
+output_file<-paste0(columnNames,".md")
+
+#create a list for each column name
+params = lapply(columnNames, FUN = function(x){list(columnNames = x)})
+
+#put into a data frame
+reports<-tibble(output_file,params)
+
+#Render Code
+apply(reports, MARGIN=1,FUN=function(x)
+  {
+    rmarkdown::render(input="Project2.Rmd",
+    output_format="github_document",
+    output_file=x[[1]],
+    params=x[[2]],
+    output_options = list(html_preview= FALSE,toc=TRUE,toc_depth=2,toc_float=TRUE)
+    )
+  }
+)
+```

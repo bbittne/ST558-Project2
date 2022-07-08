@@ -7,6 +7,9 @@ output:
    
   html_document:
     code_folding: hide
+    
+params:
+    columnNames: ""
 ---
 
 ```{r setup, include=FALSE}
@@ -23,11 +26,14 @@ rmarkdown::render("Project2.Rmd",
 ```
 
 
+
+
 # Load Packages
 
 We will use the following packages:
 
 ```{r}
+library(rmarkdown)
 library(httr)
 library(jsonlite)
 library(readr)
@@ -70,8 +76,6 @@ title_subjectivity: Title subjectivity
 
 The purpose of our analysis is to predict the number of shares in social networks (popularity). In this project, we produce some basic (but meaningful) summary statistics and plots about the training data, and fit a linear regression model and an ensemble tree-based model for predicting the number of shares.
 
-
-
 # Data
 
 Use a relative path to import the data.
@@ -87,7 +91,7 @@ Subset the data to work on the data channel of lifestyle
 #Once we parameterize this file, part of the column name will be passed in as a parameter by the render code. I'm creating a separate field to handle this portion of the column name now and eventually we can just set the parameter to this field and the rest should work.
 
 #Parameter Name will eventually go here instead of "lifestyle"
-paramColumnNameType<-"lifestyle"
+paramColumnNameType<-params$columnNames
 columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
 
 #According to dplyr help, to refer to column names stored as string, use the '.data' pronoun.
@@ -371,3 +375,28 @@ From the above compare, we can see the smallest RMSE is 8288.572 which belong to
 
 # Automation
 
+``` Automation
+#Add column names
+columnNames <- data.frame("lifestyle","entertainment","bus","socmed","tech","world")
+
+#Create filenames
+output_file<-paste0(columnNames,".md")
+
+#create a list for each column name
+params = lapply(columnNames, FUN = function(x){list(columnNames = x)})
+
+#put into a data frame
+reports<-tibble(output_file,params)
+
+#Render Code
+apply(reports, MARGIN=1,FUN=function(x)
+  {
+    rmarkdown::render(input="Project2.Rmd",
+    output_format="github_document",
+    output_file=x[[1]],
+    params=x[[2]],
+    output_options = list(html_preview= FALSE,toc=TRUE,toc_depth=2,toc_float=TRUE)
+    )
+  }
+)
+```

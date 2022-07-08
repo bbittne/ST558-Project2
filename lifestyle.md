@@ -3,17 +3,6 @@ ST558 - Project 2
 Li Wang & Bryan Bittner
 2022-07-07
 
--   [Load Packages](#load-packages)
--   [Introduction](#introduction)
--   [Data](#data)
-    -   [Summarizations](#summarizations)
--   [Modeling](#modeling)
-    -   [Linear Regression Model](#linear-regression-model)
-    -   [Random Forest Model](#random-forest-model)
-    -   [Boosted Tree Model](#boosted-tree-model)
--   [Comparison](#comparison)
--   [Automation](#automation)
-
 ``` r
 rmarkdown::render("Project2.Rmd", 
                   output_format = "github_document",
@@ -27,6 +16,7 @@ rmarkdown::render("Project2.Rmd",
 We will use the following packages:
 
 ``` r
+library(rmarkdown)
 library(httr)
 library(jsonlite)
 library(readr)
@@ -102,7 +92,7 @@ Subset the data to work on the data channel of lifestyle
 #Once we parameterize this file, part of the column name will be passed in as a parameter by the render code. I'm creating a separate field to handle this portion of the column name now and eventually we can just set the parameter to this field and the rest should work.
 
 #Parameter Name will eventually go here instead of "lifestyle"
-paramColumnNameType<-"lifestyle"
+paramColumnNameType<-params$columnNames
 columnName<-paste("data_channel_is_",paramColumnNameType,sep="")
 
 #According to dplyr help, to refer to column names stored as string, use the '.data' pronoun.
@@ -304,7 +294,7 @@ g <- ggplot(newsDataSubset, aes(x = n_tokens_title, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_title")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 From the above plot, we can see that the most shares is with 6-15 words
 in the title. Therefore, we will keep n_tokens_title variable.
@@ -317,7 +307,7 @@ g <- ggplot(newsDataSubset, aes(x = publishing_day, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 From the above plot, we can see that the best popular articles are
 usually posted on Monday, Tuesday, and Wednesday. Articles is less
@@ -332,7 +322,7 @@ g <- ggplot(newsDataSubset, aes(x = rate_positive_words, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 From the above plot, we can see that the best popular articles are with
 0.5-0.9 rate_positive_words. Therefore, the variable rate_positive_words
@@ -346,7 +336,7 @@ g <- ggplot(newsDataSubset, aes(x = n_tokens_content, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 From the above plot, we can see that the number of words in the article
 less than 1500 words are with good shares. The lesser the better.
@@ -361,7 +351,7 @@ g <- ggplot(newsDataSubset, aes(x = average_token_length, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS average_token_length")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 From the above plot, we can see that the almost shares are with 4-6
 length word. Therefore, the variable average_token_length effect to
@@ -375,7 +365,7 @@ corr=cor(newsDataSubset1, method = c("spearman"))
 corrplot(corr,tl.cex=0.5)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 By the above correlation matrix plot, we can see these variables are
 strongly correlated:
@@ -664,3 +654,29 @@ belong to RandomForest. Therefore, we will choose the Random Forest
 Model.
 
 # Automation
+
+``` automation
+#Add column names
+columnNames <- data.frame("lifestyle","entertainment","bus","socmed","tech","world")
+
+#Create filenames
+output_file<-paste0(columnNames,".md")
+
+#create a list for each column name
+params = lapply(columnNames, FUN = function(x){list(columnNames = x)})
+
+#put into a data frame
+reports<-tibble(output_file,params)
+
+#Render Code
+apply(reports, MARGIN=1,FUN=function(x)
+  {
+    rmarkdown::render(input="Project2.Rmd",
+    output_format="github_document",
+    output_file=x[[1]],
+    params=x[[2]],
+    output_options = list(html_preview= FALSE,toc=TRUE,toc_depth=2,toc_float=TRUE)
+    )
+  }
+)
+```
