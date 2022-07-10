@@ -3,16 +3,21 @@ ST558 - Project 2
 Li Wang & Bryan Bittner
 2022-07-10
 
-  - [Load Packages](#load-packages)
-  - [Introduction](#introduction)
-  - [Data](#data)
-      - [Summarizations](#summarizations)
-  - [Modeling](#modeling)
-      - [Linear Regression Model](#linear-regression-model)
-      - [Random Forest Model](#random-forest-model)
-      - [Boosted Tree Model](#boosted-tree-model)
-  - [Comparison](#comparison)
-  - [Automation](#automation)
+-   [Load Packages](#load-packages)
+-   [Introduction](#introduction)
+-   [Data](#data)
+-   [Data Train/Test Split](#data-traintest-split)
+-   [Summarizations](#summarizations)
+    -   [Data structure and basic summary
+        statistics](#data-structure-and-basic-summary-statistics)
+    -   [Plots](#plots)
+    -   [Feature selection](#feature-selection)
+-   [Modeling](#modeling)
+    -   [Linear Regression Model](#linear-regression-model)
+    -   [Random Forest Model](#random-forest-model)
+    -   [Boosted Tree Model](#boosted-tree-model)
+-   [Comparison](#comparison)
+-   [Automation](#automation)
 
 ``` r
 rmarkdown::render("Project2.Rmd", 
@@ -42,34 +47,41 @@ library(gbm)
 
 # Introduction
 
-This data set summarizes a heterogeneous set of features about articles
-published by Mashable in a period of two years.
+This [online News Popularity Data
+Set](https://archive.ics.uci.edu/ml/datasets/Online+News+Popularity)
+summarizes a heterogeneous set of features about articles published by
+Mashable in a period of two years.
 
-Our target variable is the shares variable, and predict variables are
-the following:
+Our target variable is the shares variable(Number of shares ), and
+predict variables are the following:
 
-publishing\_day: Day of the article published n\_tokens\_title: Number
-of words in the title n\_tokens\_content: Number of words in the content
-num\_self\_hrefs: Number of links to other articles published by
-Mashable num\_imgs: Number of images num\_videos: Number of videos
-average\_token\_length: Average length of the words in the content
-num\_keywords: Number of keywords in the metadata kw\_avg\_min: Worst
-keyword (avg. shares) kw\_avg\_avg: Avg. keyword (avg. shares)
-self\_reference\_avg\_shares: Avg. shares of referenced articles in
-Mashable LDA\_04: Closeness to LDA topic 4 global\_subjectivity: ext
-subjectivity global\_rate\_positive\_words: Rate of positive words in
-the content rate\_positive\_words: Rate of positive words among
-non-neutral tokens avg\_positive\_polarity: Avg. polarity of positive
-words min\_positive\_polarity: Min. polarity of positive words
-avg\_negative\_polarity: Avg. polarity of negative words
-max\_negative\_polarity: Max. polarity of negative words
-title\_subjectivity: Title subjectivity
+-   publishing_day: Day of the article published
+-   n_tokens_title: Number of words in the title
+-   n_tokens_content: Number of words in the content
+-   num_self_hrefs: Number of links to other articles published by
+    Mashable
+-   num_imgs: Number of images
+-   num_videos: Number of videos
+-   average_token_length: Average length of the words in the content
+-   num_keywords: Number of keywords in the metadata
+-   kw_avg_min: Worst keyword (avg. shares)
+-   kw_avg_avg: Avg. keyword (avg. shares)
+-   self_reference_avg_shares: Avg. shares of referenced articles in
+    Mashable
+-   LDA_04: Closeness to LDA topic 4
+-   global_subjectivity: ext subjectivity
+-   global_rate_positive_words: Rate of positive words in the content
+-   rate_positive_words: Rate of positive words among non-neutral tokens
+-   avg_positive_polarity: Avg. polarity of positive words
+-   min_positive_polarity: Min. polarity of positive words
+-   avg_negative_polarity: Avg. polarity of negative words
+-   max_negative_polarity: Max. polarity of negative words
+-   title_subjectivity: Title subjectivity
 
 The purpose of our analysis is to predict the number of shares in social
-networks (popularity). In this project, we produce some basic (but
-meaningful) summary statistics and plots about the training data, and
-fit a linear regression model and an ensemble tree-based model for
-predicting the number of shares.
+networks (popularity). In this project, we produce some basic summary
+statistics and plots about the training data, and fit a linear
+regression model and an ensemble tree-based model.
 
 # Data
 
@@ -79,6 +91,23 @@ Use a relative path to import the data.
 newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
 head(newsData)
 ```
+
+    ## # A tibble: 6 × 61
+    ##   url                timedelta n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_uniq… num_hrefs
+    ##   <chr>                  <dbl>          <dbl>            <dbl>           <dbl>            <dbl>            <dbl>     <dbl>
+    ## 1 http://mashable.c…       731             12              219           0.664             1.00            0.815         4
+    ## 2 http://mashable.c…       731              9              255           0.605             1.00            0.792         3
+    ## 3 http://mashable.c…       731              9              211           0.575             1.00            0.664         3
+    ## 4 http://mashable.c…       731              9              531           0.504             1.00            0.666         9
+    ## 5 http://mashable.c…       731             13             1072           0.416             1.00            0.541        19
+    ## 6 http://mashable.c…       731             10              370           0.560             1.00            0.698         2
+    ## # … with 53 more variables: num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>, average_token_length <dbl>,
+    ## #   num_keywords <dbl>, data_channel_is_lifestyle <dbl>, data_channel_is_entertainment <dbl>, data_channel_is_bus <dbl>,
+    ## #   data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>, data_channel_is_world <dbl>, kw_min_min <dbl>,
+    ## #   kw_max_min <dbl>, kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>, kw_min_avg <dbl>,
+    ## #   kw_max_avg <dbl>, kw_avg_avg <dbl>, self_reference_min_shares <dbl>, self_reference_max_shares <dbl>,
+    ## #   self_reference_avg_sharess <dbl>, weekday_is_monday <dbl>, weekday_is_tuesday <dbl>, weekday_is_wednesday <dbl>,
+    ## #   weekday_is_thursday <dbl>, weekday_is_friday <dbl>, weekday_is_saturday <dbl>, weekday_is_sunday <dbl>, …
 
 Subset the data. If running the reports by an automated parameter driven
 process, the report will automatically use the parameter passed into
@@ -101,7 +130,7 @@ newsDataSubset <- filter(newsData,.data[[columnName]] == 1)
 ```
 
 Merging the weekdays columns channels as one single column named
-publishing\_day.
+publishing_day.
 
 ``` r
 # Merging the weekdays columns channels as one single column named publishing_day
@@ -118,91 +147,150 @@ newsDataSubset$publishing_day<- as.factor(newsDataSubset$publishing_day)
 head(newsDataSubset)
 ```
 
+    ## # A tibble: 6 × 56
+    ##   url     value publishing_day timedelta n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_uniq…
+    ##   <chr>   <dbl> <fct>              <dbl>          <dbl>            <dbl>           <dbl>            <dbl>            <dbl>
+    ## 1 http:/…     1 monday               731             13             1072           0.416             1.00            0.541
+    ## 2 http:/…     1 monday               731             10              370           0.560             1.00            0.698
+    ## 3 http:/…     1 monday               731             12              989           0.434             1.00            0.572
+    ## 4 http:/…     1 monday               731             11               97           0.670             1.00            0.837
+    ## 5 http:/…     1 monday               731              8             1207           0.411             1.00            0.549
+    ## 6 http:/…     1 monday               731             13             1248           0.391             1.00            0.523
+    ## # … with 47 more variables: num_hrefs <dbl>, num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>,
+    ## #   average_token_length <dbl>, num_keywords <dbl>, data_channel_is_lifestyle <dbl>, data_channel_is_entertainment <dbl>,
+    ## #   data_channel_is_bus <dbl>, data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>, data_channel_is_world <dbl>,
+    ## #   kw_min_min <dbl>, kw_max_min <dbl>, kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>,
+    ## #   kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>, self_reference_min_shares <dbl>,
+    ## #   self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>, is_weekend <dbl>, LDA_00 <dbl>, LDA_01 <dbl>,
+    ## #   LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>, global_subjectivity <dbl>, global_sentiment_polarity <dbl>, …
+
 Here we drop some non-preditive variables:
-url,value,timedelta,data\_channel\_is\_lifestyle,
-data\_channel\_is\_entertainment,data\_channel\_is\_bus,
-data\_channel\_is\_socmed
-,data\_channel\_is\_tech,data\_channel\_is\_world columns,is\_weekend.
-They won’t contribute anything.
+url,value,timedelta,data_channel_is_lifestyle,
+data_channel_is_entertainment,data_channel_is_bus,
+data_channel_is_socmed ,data_channel_is_tech,data_channel_is_world
+columns,is_weekend. They won’t contribute anything.
 
 ``` r
 newsDataSubset<-newsDataSubset%>%select(-c(1,2,4,16:21,34))
 newsDataSubset
 ```
 
-## Summarizations
+    ## # A tibble: 7,346 × 46
+    ##    publishing_day n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_unique_tokens num_hrefs
+    ##    <fct>                   <dbl>            <dbl>           <dbl>            <dbl>                    <dbl>     <dbl>
+    ##  1 monday                     13             1072           0.416             1.00                    0.541        19
+    ##  2 monday                     10              370           0.560             1.00                    0.698         2
+    ##  3 monday                     12              989           0.434             1.00                    0.572        20
+    ##  4 monday                     11               97           0.670             1.00                    0.837         2
+    ##  5 monday                      8             1207           0.411             1.00                    0.549        24
+    ##  6 monday                     13             1248           0.391             1.00                    0.523        21
+    ##  7 monday                     11             1154           0.427             1.00                    0.573        20
+    ##  8 monday                      8              266           0.573             1.00                    0.721         5
+    ##  9 monday                      8              331           0.563             1.00                    0.724         5
+    ## 10 monday                     12             1225           0.385             1.00                    0.509        22
+    ## # … with 7,336 more rows, and 39 more variables: num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>,
+    ## #   average_token_length <dbl>, num_keywords <dbl>, kw_min_min <dbl>, kw_max_min <dbl>, kw_avg_min <dbl>,
+    ## #   kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>, kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>,
+    ## #   self_reference_min_shares <dbl>, self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>, LDA_00 <dbl>,
+    ## #   LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>, global_subjectivity <dbl>, global_sentiment_polarity <dbl>,
+    ## #   global_rate_positive_words <dbl>, global_rate_negative_words <dbl>, rate_positive_words <dbl>,
+    ## #   rate_negative_words <dbl>, avg_positive_polarity <dbl>, min_positive_polarity <dbl>, max_positive_polarity <dbl>, …
+
+# Data Train/Test Split
+
+Lets set up our Train/Test split. This will allow us to determine the
+model fit using a subset of data called Training, while saving the
+remainder of the data called Test to test our model predictions with.
+
+``` r
+set.seed(111)
+train <- sample(1:nrow(newsDataSubset),size=nrow(newsDataSubset)*0.7)
+test <- dplyr::setdiff(1:nrow(newsDataSubset),train)
+
+newsDataSubsetTrain <- newsDataSubset[train,]
+newsDataSubsetTest <- newsDataSubset[test,]
+```
+
+# Summarizations
+
+## Data structure and basic summary statistics
 
 Start with the data structure and basic summary statistics for the
 ‘shares’ field.
 
 ``` r
 # data structure
-str(newsDataSubset)
+str(newsDataSubsetTrain)
 ```
 
-    ## tibble [7,346 × 46] (S3: tbl_df/tbl/data.frame)
-    ##  $ publishing_day              : Factor w/ 7 levels "friday","monday",..: 2 2 2 2 2 2 2 2 2 2 ...
-    ##  $ n_tokens_title              : num [1:7346] 13 10 12 11 8 13 11 8 8 12 ...
-    ##  $ n_tokens_content            : num [1:7346] 1072 370 989 97 1207 ...
-    ##  $ n_unique_tokens             : num [1:7346] 0.416 0.56 0.434 0.67 0.411 ...
-    ##  $ n_non_stop_words            : num [1:7346] 1 1 1 1 1 ...
-    ##  $ n_non_stop_unique_tokens    : num [1:7346] 0.541 0.698 0.572 0.837 0.549 ...
-    ##  $ num_hrefs                   : num [1:7346] 19 2 20 2 24 21 20 5 5 22 ...
-    ##  $ num_self_hrefs              : num [1:7346] 19 2 20 0 24 19 20 2 3 22 ...
-    ##  $ num_imgs                    : num [1:7346] 20 0 20 0 42 20 20 1 1 28 ...
-    ##  $ num_videos                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ average_token_length        : num [1:7346] 4.68 4.36 4.62 4.86 4.72 ...
-    ##  $ num_keywords                : num [1:7346] 7 9 9 7 8 10 7 10 9 9 ...
-    ##  $ kw_min_min                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_max_min                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_avg_min                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_min_max                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_max_max                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_avg_max                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_min_avg                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_max_avg                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ kw_avg_avg                  : num [1:7346] 0 0 0 0 0 0 0 0 0 0 ...
-    ##  $ self_reference_min_shares   : num [1:7346] 545 8500 545 0 545 545 545 924 2500 545 ...
-    ##  $ self_reference_max_shares   : num [1:7346] 16000 8500 16000 0 16000 16000 16000 924 2500 16000 ...
-    ##  $ self_reference_avg_sharess  : num [1:7346] 3151 8500 3151 0 2830 ...
-    ##  $ LDA_00                      : num [1:7346] 0.0286 0.0222 0.0222 0.4583 0.025 ...
-    ##  $ LDA_01                      : num [1:7346] 0.0288 0.3067 0.1507 0.029 0.0252 ...
-    ##  $ LDA_02                      : num [1:7346] 0.0286 0.0222 0.2434 0.0287 0.025 ...
-    ##  $ LDA_03                      : num [1:7346] 0.0286 0.0222 0.0222 0.0297 0.025 ...
-    ##  $ LDA_04                      : num [1:7346] 0.885 0.627 0.561 0.454 0.9 ...
-    ##  $ global_subjectivity         : num [1:7346] 0.514 0.437 0.543 0.539 0.539 ...
-    ##  $ global_sentiment_polarity   : num [1:7346] 0.281 0.0712 0.2986 0.1611 0.2883 ...
-    ##  $ global_rate_positive_words  : num [1:7346] 0.0746 0.0297 0.0839 0.0309 0.0696 ...
-    ##  $ global_rate_negative_words  : num [1:7346] 0.0121 0.027 0.0152 0.0206 0.0116 ...
-    ##  $ rate_positive_words         : num [1:7346] 0.86 0.524 0.847 0.6 0.857 ...
-    ##  $ rate_negative_words         : num [1:7346] 0.14 0.476 0.153 0.4 0.143 ...
-    ##  $ avg_positive_polarity       : num [1:7346] 0.411 0.351 0.428 0.567 0.427 ...
-    ##  $ min_positive_polarity       : num [1:7346] 0.0333 0.1364 0.1 0.4 0.1 ...
-    ##  $ max_positive_polarity       : num [1:7346] 1 0.6 1 0.8 1 1 1 0.35 1 1 ...
-    ##  $ avg_negative_polarity       : num [1:7346] -0.22 -0.195 -0.243 -0.125 -0.227 ...
-    ##  $ min_negative_polarity       : num [1:7346] -0.5 -0.4 -0.5 -0.125 -0.5 -0.5 -0.5 -0.2 -0.5 -0.5 ...
-    ##  $ max_negative_polarity       : num [1:7346] -0.05 -0.1 -0.05 -0.125 -0.05 -0.05 -0.05 -0.05 -0.125 -0.05 ...
-    ##  $ title_subjectivity          : num [1:7346] 0.455 0.643 1 0.125 0.5 ...
-    ##  $ title_sentiment_polarity    : num [1:7346] 0.136 0.214 0.5 0 0 ...
-    ##  $ abs_title_subjectivity      : num [1:7346] 0.0455 0.1429 0.5 0.375 0 ...
-    ##  $ abs_title_sentiment_polarity: num [1:7346] 0.136 0.214 0.5 0 0 ...
-    ##  $ shares                      : num [1:7346] 505 855 891 3600 17100 2800 445 783 1500 1800 ...
+    ## tibble [5,142 × 46] (S3: tbl_df/tbl/data.frame)
+    ##  $ publishing_day              : Factor w/ 7 levels "friday","monday",..: 6 7 1 3 6 7 6 6 1 6 ...
+    ##  $ n_tokens_title              : num [1:5142] 12 10 9 9 8 7 10 11 15 14 ...
+    ##  $ n_tokens_content            : num [1:5142] 525 380 252 234 846 646 458 748 410 186 ...
+    ##  $ n_unique_tokens             : num [1:5142] 0.512 0.547 0.53 0.628 0.457 ...
+    ##  $ n_non_stop_words            : num [1:5142] 1 1 1 1 1 ...
+    ##  $ n_non_stop_unique_tokens    : num [1:5142] 0.728 0.706 0.571 0.75 0.614 ...
+    ##  $ num_hrefs                   : num [1:5142] 5 6 1 2 3 33 7 9 12 9 ...
+    ##  $ num_self_hrefs              : num [1:5142] 4 6 1 1 3 3 7 3 9 7 ...
+    ##  $ num_imgs                    : num [1:5142] 1 2 18 0 8 11 11 1 1 1 ...
+    ##  $ num_videos                  : num [1:5142] 0 0 0 0 0 0 1 1 1 0 ...
+    ##  $ average_token_length        : num [1:5142] 4.58 4.29 4.81 5.03 4.36 ...
+    ##  $ num_keywords                : num [1:5142] 7 6 10 8 6 10 9 5 8 8 ...
+    ##  $ kw_min_min                  : num [1:5142] -1 -1 217 217 4 217 4 -1 -1 4 ...
+    ##  $ kw_max_min                  : num [1:5142] 211 221 444 866 795 515 18400 3700 377 4500 ...
+    ##  $ kw_avg_min                  : num [1:5142] 76.9 36 340.5 464.3 197.2 ...
+    ##  $ kw_min_max                  : num [1:5142] 104100 53200 0 0 4800 ...
+    ##  $ kw_max_max                  : num [1:5142] 843300 843300 617900 51900 843300 ...
+    ##  $ kw_avg_max                  : num [1:5142] 609343 498567 103550 18632 221133 ...
+    ##  $ kw_min_avg                  : num [1:5142] 2919 2443 0 0 1924 ...
+    ##  $ kw_max_avg                  : num [1:5142] 6878 3460 4087 4088 3256 ...
+    ##  $ kw_avg_avg                  : num [1:5142] 3874 2923 2690 1807 2699 ...
+    ##  $ self_reference_min_shares   : num [1:5142] 9700 1100 27500 2100 4400 2400 2400 3700 1600 9000 ...
+    ##  $ self_reference_max_shares   : num [1:5142] 47700 11900 27500 2100 5000 6300 6100 23500 7800 9000 ...
+    ##  $ self_reference_avg_sharess  : num [1:5142] 23633 4920 27500 2100 4700 ...
+    ##  $ LDA_00                      : num [1:5142] 0.1756 0.0334 0.1198 0.025 0.0334 ...
+    ##  $ LDA_01                      : num [1:5142] 0.0286 0.0333 0.2846 0.0255 0.0333 ...
+    ##  $ LDA_02                      : num [1:5142] 0.0287 0.0333 0.02 0.0252 0.0333 ...
+    ##  $ LDA_03                      : num [1:5142] 0.0286 0.0333 0.2556 0.0255 0.0333 ...
+    ##  $ LDA_04                      : num [1:5142] 0.738 0.867 0.32 0.899 0.867 ...
+    ##  $ global_subjectivity         : num [1:5142] 0.443 0.345 0.35 0.349 0.448 ...
+    ##  $ global_sentiment_polarity   : num [1:5142] 0.1684 0.0302 0.0474 0.0729 0.1614 ...
+    ##  $ global_rate_positive_words  : num [1:5142] 0.0419 0.0211 0.0397 0.0342 0.0496 ...
+    ##  $ global_rate_negative_words  : num [1:5142] 0.019 0.0184 0.0317 0.0214 0.0154 ...
+    ##  $ rate_positive_words         : num [1:5142] 0.688 0.533 0.556 0.615 0.764 ...
+    ##  $ rate_negative_words         : num [1:5142] 0.312 0.467 0.444 0.385 0.236 ...
+    ##  $ avg_positive_polarity       : num [1:5142] 0.383 0.226 0.266 0.325 0.347 ...
+    ##  $ min_positive_polarity       : num [1:5142] 0.1 0.1 0.136 0.1 0.1 ...
+    ##  $ max_positive_polarity       : num [1:5142] 0.7 0.6 0.6 0.5 1 0.8 1 0.85 0.5 0.6 ...
+    ##  $ avg_negative_polarity       : num [1:5142] -0.209 -0.155 -0.177 -0.17 -0.259 ...
+    ##  $ min_negative_polarity       : num [1:5142] -0.389 -0.3 -0.2 -0.333 -0.5 ...
+    ##  $ max_negative_polarity       : num [1:5142] -0.05 -0.05 -0.125 -0.05 -0.1 ...
+    ##  $ title_subjectivity          : num [1:5142] 0 0 0 0.4 0 ...
+    ##  $ title_sentiment_polarity    : num [1:5142] 0 0 0 -0.05 0 0 0 -0.6 0 0.25 ...
+    ##  $ abs_title_subjectivity      : num [1:5142] 0.5 0.5 0.5 0.1 0.5 ...
+    ##  $ abs_title_sentiment_polarity: num [1:5142] 0 0 0 0.05 0 0 0 0.6 0 0.25 ...
+    ##  $ shares                      : num [1:5142] 1400 2600 9300 7800 2400 2000 927 4400 1600 643 ...
 
 ``` r
 # data summary
-summary(newsDataSubset$shares)
+summary(newsDataSubsetTrain$shares)
 ```
 
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##      36    1100    1700    3072    3000  663600
+    ##      36    1100    1700    2972    3000   96100
 
 Now lets show the Mean, Median, Variance, and Standard Deviation. Notice
 the Variance and Standard Deviation are both extremely high. This might
 be something we will have to investigate further.
 
 ``` r
-newsDataSubset %>% summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
+newsDataSubsetTrain %>% summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
+
+    ## # A tibble: 1 × 4
+    ##     avg   med       var    sd
+    ##   <dbl> <dbl>     <dbl> <dbl>
+    ## 1 2972.  1700 20036678. 4476.
 
 Looking at the different columns in the dataset, there are two that
 stand out. Generally speaking, people probably aren’t going to look at
@@ -210,164 +298,191 @@ articles that don’t have images or videos. Here are the summary stats
 for the articles grouped on the number of images in the article.
 
 ``` r
-newsDataSubset %>% group_by(num_imgs) %>%
+newsDataSubsetTrain %>% group_by(num_imgs) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-As we can see from the above table, the largest avg of shares is with 27
+    ## # A tibble: 48 × 5
+    ##    num_imgs   avg   med       var    sd
+    ##       <dbl> <dbl> <dbl>     <dbl> <dbl>
+    ##  1        0 3147.  1700 24789022. 4979.
+    ##  2        1 2798.  1600 19470938. 4413.
+    ##  3        2 2641.  1700 15052148. 3880.
+    ##  4        3 3681.  2100 48133779. 6938.
+    ##  5        4 3496.  2150 16238143. 4030.
+    ##  6        5 3237.  2100  9503201. 3083.
+    ##  7        6 2829.  2000  9208018. 3034.
+    ##  8        7 2976.  2100  8090052. 2844.
+    ##  9        8 2947.  1900 21696674. 4658.
+    ## 10        9 2594.  1800  4848247. 2202.
+    ## # … with 38 more rows
+
+As we can see from the above table, the largest avg of shares is with 28
 images, and the least avg of shares is with 23 images. Therefore, the
-number of images variable is affect shares, we will keep this variable.
+number of images variable affects shares, and we will keep this
+variable.
 
 Here are the summary stats for articles with videos.
 
 ``` r
-newsDataSubset %>% group_by(num_videos) %>%
+newsDataSubsetTrain %>% group_by(num_videos) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
+    ## # A tibble: 16 × 5
+    ##    num_videos    avg   med        var     sd
+    ##         <dbl>  <dbl> <dbl>      <dbl>  <dbl>
+    ##  1          0  2726.  1600  15202925.  3899.
+    ##  2          1  3366.  1900  25734266.  5073.
+    ##  3          2  3956.  2000  26464384.  5144.
+    ##  4          3  5361.  2400 211818153. 14554.
+    ##  5          4  3246.  2300   8121048.  2850.
+    ##  6          5  2525   2600    676429.   822.
+    ##  7          6  7080.  3100 139801797. 11824.
+    ##  8          7  3688.  2200   9441250   3073.
+    ##  9          8 12500  12500 242000000  15556.
+    ## 10          9  5680   3800  25857000   5085.
+    ## 11         10  3810.  1200  22295548.  4722.
+    ## 12         11  4582.  1350  68816063.  8296.
+    ## 13         14 38900  38900        NA     NA 
+    ## 14         17  8400   8400  79380000   8910.
+    ## 15         25  1400   1400        NA     NA 
+    ## 16         73   757    757        NA     NA
+
 As we can see from the above table, the largest avg of shares is with 15
 videos, and the least avg of shares is with 28 videos Therefore, the
-number of videos variable is affect shares, we will keep this variable.
+number of videos variable affects shares, and we will keep this
+variable.
 
-A plot with the number of shares on the y-axis and n\_tokens\_title on
-the x-axis is created:
+## Plots
+
+A plot with the number of shares on the y-axis and n_tokens_title on the
+x-axis is created:
 
 ``` r
-g <- ggplot(newsDataSubset, aes(x = n_tokens_title, y = shares))
+g <- ggplot(newsDataSubsetTrain, aes(x = n_tokens_title, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_title")
-```
-
-![](tech_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-
-From the above plot, we can see that the most shares is with 6-15 words
-in the title. Therefore, we will keep n\_tokens\_title variable.
-
-A plot with the number of shares on the y-axis and publishing\_day on
-the x-axis is created:
-
-``` r
-g <- ggplot(newsDataSubset, aes(x = publishing_day, y = shares))
-g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 ```
 
 ![](tech_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
-From the above plot, we can see that the best popular articles are
-usually posted on Monday, Tuesday, and Wednesday. Articles is less
-popularity which are published on Sunday and Saturday. Therefore, we
-will keep publishing\_day.
+From the above plot, we can see that the most shares is with 6-15 words
+in the title. Therefore, the number of words in the title affects
+shares, and we will keep n_tokens_title variable.
 
-A plot with the number of shares on the y-axis and rate\_positive\_words
-on the x-axis is created:
+A plot with the number of shares on the y-axis and publishing_day on the
+x-axis is created:
 
 ``` r
-g <- ggplot(newsDataSubset, aes(x = rate_positive_words, y = shares))
-g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
+g <- ggplot(newsDataSubsetTrain, aes(x = publishing_day, y = shares))
+g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 ```
 
 ![](tech_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
-From the above plot, we can see that the best popular articles are with
-0.5-0.9 rate\_positive\_words. Therefore, the variable
-rate\_positive\_words effect to shares, we will keep this variable.
+From the above plot, we can see that the best popular articles are
+usually posted on Monday, Tuesday, and Wednesday. Articles is less
+popularity which are published on Sunday and Saturday. Therefore, the
+publishing_day affects shares, and we will keep publishing_day.
 
-A plot with the number of shares on the y-axis and n\_tokens\_content on
-the x-axis is created:
+A plot with the number of shares on the y-axis and rate_positive_words
+on the x-axis is created:
 
 ``` r
-g <- ggplot(newsDataSubset, aes(x = n_tokens_content, y = shares))
-g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
+g <- ggplot(newsDataSubsetTrain, aes(x = rate_positive_words, y = shares))
+g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
 ```
 
 ![](tech_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
-From the above plot, we can see that the number of words in the article
-less than 1500 words are with good shares. The lesser the better.
-Therefore, the variable n\_tokens\_content effect to shares, we will
-keep this variable.
+From the above plot, we can see that the best popular articles are with
+0.5-0.9 rate_positive_words. Therefore, the variable rate_positive_words
+effects shares, and we will keep this variable.
 
-A plot with the number of shares on the y-axis and
-average\_token\_length on the x-axis is created:
+A plot with the number of shares on the y-axis and n_tokens_content on
+the x-axis is created:
 
 ``` r
-g <- ggplot(newsDataSubset, aes(x = average_token_length, y = shares))
-g + geom_point()+labs(title = "Plot of shares VS average_token_length")
+g <- ggplot(newsDataSubsetTrain, aes(x = n_tokens_content, y = shares))
+g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
 ```
 
 ![](tech_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
-From the above plot, we can see that the almost shares are with 4-6
-length word. Therefore, the variable average\_token\_length effect to
-shares, we will keep this variable.
+From the above plot, we can see that the number of words in the article
+less than 2000 words are with good shares. The less the better.
+Therefore, the variable n_tokens_content effects shares, and we will
+keep this variable.
 
-Correlation matrix plot is generated:
+A plot with the number of shares on the y-axis and average_token_length
+on the x-axis is created:
 
 ``` r
-newsDataSubset1<-select(newsDataSubset,-publishing_day)
-corr=cor(newsDataSubset1, method = c("spearman"))
-corrplot(corr,tl.cex=0.5)
+g <- ggplot(newsDataSubsetTrain, aes(x = average_token_length, y = shares))
+g + geom_point()+labs(title = "Plot of shares VS average_token_length")
 ```
 
 ![](tech_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
+From the above plot, we can see that the almost shares are with 4-6
+length word. Therefore, the variable average_token_length effects
+shares, and we will keep this variable.
+
+Correlation matrix plot is generated:
+
+``` r
+newsDataSubsetTrain1<-select(newsDataSubsetTrain,-publishing_day)
+corr=cor(newsDataSubsetTrain1, method = c("spearman"))
+corrplot(corr,tl.cex=0.5)
+```
+
+![](tech_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
 By the above correlation matrix plot, we can see these variables are
 strongly correlated:
 
-  - title\_subjectivity, abs\_title\_sentiment\_polarity,
-    abs\_title\_subjectivity, title\_sentiment\_polarity
-  - avg\_negative\_polarity, min\_negative\_polarity
-  - max\_positive\_polarity, avg\_positive\_polarity
-  - global\_rate\_negative\_words,
-    rate\_negative\_words,rate\_positive\_words
-  - global\_sentiment\_polarity, rate\_negative\_words,
-    rate\_positive\_words
-  - LDA\_03,LDA\_04
-  - LDA\_00,LDA\_04
-  - self\_reference\_max\_shares, self\_reference\_avg\_shares,
-    self\_reference\_min\_shares
-  - kw\_max\_avg, kw\_avg\_avg
-  - kw\_min\_avg,kw\_avg\_avg,kw\_min\_max
-  - kw\_avg\_max,kw\_avg\_avg,kw\_max\_max
-  - kw\_avg\_min,kw\_avg\_max
-  - kw\_max\_min,kw\_avg\_min,kw\_min\_min
-  - kw\_min\_min,kw\_avg\_max
-  - num\_keywords,LDA\_01
-  - num\_keywords,LDA\_02
-  - num\_hrefs, num\_imgs
-  - n\_non\_stop\_unique\_tokens, num\_imgs
-  - n\_non\_stop\_words, n\_non\_stop\_unique\_tokens
-  - n\_unique\_tokens,n\_non\_stop\_unique\_tokens
-  - n\_unique\_tokens, n\_non\_stop\_words, n\_tokens\_content
-  - n\_tokens\_content, n\_non\_stop\_unique\_tokens
-  - n\_tokens\_content, num\_hrefs
+-   title_subjectivity, abs_title_sentiment_polarity,
+    abs_title_subjectivity, title_sentiment_polarity
+-   avg_negative_polarity, min_negative_polarity
+-   max_positive_polarity, avg_positive_polarity
+-   global_rate_negative_words, rate_negative_words,rate_positive_words
+-   global_sentiment_polarity, rate_negative_words, rate_positive_words
+-   LDA_03,LDA_04
+-   LDA_00,LDA_04
+-   self_reference_max_shares, self_reference_avg_shares,
+    self_reference_min_shares
+-   kw_max_avg, kw_avg_avg
+-   kw_min_avg,kw_avg_avg,kw_min_max
+-   kw_avg_max,kw_avg_avg,kw_max_max
+-   kw_avg_min,kw_avg_max
+-   kw_max_min,kw_avg_min,kw_min_min
+-   kw_min_min,kw_avg_max
+-   num_keywords,LDA_01
+-   num_keywords,LDA_02
+-   num_hrefs, num_imgs
+-   n_non_stop_unique_tokens, num_imgs
+-   n_non_stop_words, n_non_stop_unique_tokens
+-   n_unique_tokens,n_non_stop_unique_tokens
+-   n_unique_tokens, n_non_stop_words, n_tokens_content
+-   n_tokens_content, n_non_stop_unique_tokens
+-   n_tokens_content, num_hrefs
 
-These are strongly correlated and linearly dependent which makes us to
-assume that these features are so linearly dependent that any one of the
-strong correlated feature can be used and excluding the other features
-won’t affect the model and will be indirectly helpful in our model by
-not allowing to do overfitting.
+These are strongly correlated which makes us to assume that these
+features are so linearly dependent that any one of the strong correlated
+feature can be used and excluding the other features with high
+correlation.
+
+## Feature selection
 
 Let’s do feature selection:
 
 ``` r
-newsDataSubset2<-select(newsDataSubset,-abs_title_sentiment_polarity, -abs_title_subjectivity, -title_sentiment_polarity,-min_negative_polarity,-max_positive_polarity,-rate_negative_words,-global_rate_negative_words,-global_sentiment_polarity,-LDA_03,-LDA_00,-self_reference_max_shares,-self_reference_min_shares,-kw_max_avg,-kw_min_avg,-kw_min_max,-kw_avg_max,-kw_max_max,-kw_max_min,-kw_min_min,-LDA_01,-LDA_02,-num_hrefs,-n_non_stop_unique_tokens,-n_unique_tokens,-n_non_stop_words)
+newsDataSubsetTrain2<-select(newsDataSubsetTrain,-abs_title_sentiment_polarity, -abs_title_subjectivity, -title_sentiment_polarity,-min_negative_polarity,-max_positive_polarity,-rate_negative_words,-global_rate_negative_words,-global_sentiment_polarity,-LDA_03,-LDA_00,-self_reference_max_shares,-self_reference_min_shares,-kw_max_avg,-kw_min_avg,-kw_min_max,-kw_avg_max,-kw_max_max,-kw_max_min,-kw_min_min,-LDA_01,-LDA_02,-num_hrefs,-n_non_stop_unique_tokens,-n_unique_tokens,-n_non_stop_words)
+
+newsDataSubsetTest2<-select(newsDataSubsetTrain,-abs_title_sentiment_polarity, -abs_title_subjectivity, -title_sentiment_polarity,-min_negative_polarity,-max_positive_polarity,-rate_negative_words,-global_rate_negative_words,-global_sentiment_polarity,-LDA_03,-LDA_00,-self_reference_max_shares,-self_reference_min_shares,-kw_max_avg,-kw_min_avg,-kw_min_max,-kw_avg_max,-kw_max_max,-kw_max_min,-kw_min_min,-LDA_01,-LDA_02,-num_hrefs,-n_non_stop_unique_tokens,-n_unique_tokens,-n_non_stop_words)
 ```
 
 # Modeling
-
-Before we do any modeling, lets set up our Train/Test split. This will
-allow us to determine the model fit using a subset of data called
-Training, while saving the remainder of the data called Test to test our
-model predictions with.
-
-``` r
-set.seed(111)
-train <- sample(1:nrow(newsDataSubset2),size=nrow(newsDataSubset2)*0.7)
-test <- dplyr::setdiff(1:nrow(newsDataSubset2),train)
-
-newsDataSubsetTrain <- newsDataSubset2[train,]
-newsDataSubsetTest <- newsDataSubset2[test,]
-```
 
 ## Linear Regression Model
 
@@ -381,13 +496,13 @@ interactive and or higher order terms that will conform to a more
 complex relationship.
 
 For the first linear model example, we can try a model using just the
-“num\_imgs” and “num\_videos” as our predictors.
+“num_imgs” and “num_videos” as our predictors.
 
 ``` r
 set.seed(111)
 #Fit a  multiple linear regression model using just the "num_imgs" and "num_videos" as our predictors. 
 mlrFit <- train(shares ~ num_imgs + num_videos, 
-                data = newsDataSubsetTrain, 
+                data = newsDataSubsetTrain2, 
                 method="lm",
                 trControl=trainControl(method="cv",number=5))
 mlrFit
@@ -415,7 +530,7 @@ variables.
 #Fit a  multiple linear regression model using all of the fields as a predictor variables.
 set.seed(111)
 mlrAllFit <- train(shares ~ ., 
-                data = newsDataSubsetTrain, 
+                data = newsDataSubsetTrain2, 
                 method="lm",
                 trControl=trainControl(method="cv",number=5))
 mlrAllFit
@@ -436,14 +551,14 @@ mlrAllFit
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
-Try a model using just the num\_imgs + num\_videos + kw\_avg\_avg +
-num\_imgs\*kw\_avg\_avg as our predictors.
+Try a model using just the num_imgs + num_videos + kw_avg_avg +
+num_imgs\*kw_avg_avg as our predictors.
 
 ``` r
 set.seed(111)
 #Fit a  multiple linear regression model with num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg. 
 mlrInteractionFit <- train(shares ~ num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg, 
-                data = newsDataSubsetTrain, 
+                data = newsDataSubsetTrain2, 
                 method="lm",
                 trControl=trainControl(method="cv",number=5))
 mlrInteractionFit
@@ -480,7 +595,7 @@ reduction in the overall model variance.
 ``` r
 set.seed(111)
 randomForestFit <- train(shares ~ ., 
-                         data = newsDataSubsetTrain, 
+                         data = newsDataSubsetTrain2, 
                          method="rf",
                          preProcess=c("center","scale"),
                          trControl=trainControl(method="cv",number=5),
@@ -498,10 +613,10 @@ randomForestFit
     ## Summary of sample sizes: 4113, 4114, 4114, 4113, 4114 
     ## Resampling results:
     ## 
-    ##   RMSE      Rsquared    MAE    
-    ##   4409.682  0.03253447  2241.12
+    ##   RMSE      Rsquared  MAE     
+    ##   4473.976  0.025365  2278.595
     ## 
-    ## Tuning parameter 'mtry' was held constant at a value of 7
+    ## Tuning parameter 'mtry' was held constant at a value of 15.33333
 
 ## Boosted Tree Model
 
@@ -522,7 +637,7 @@ boosting.
 ``` r
 set.seed(111)
 BoostedTreeFit <- train(shares ~ ., 
-                         data = newsDataSubsetTrain,
+                         data = newsDataSubsetTrain2,
                          distribution = "gaussian",
                          method="gbm",
                          trControl=trainControl(method="cv",number=5),
@@ -552,52 +667,50 @@ BoostedTreeFit
     ##   3                  150      4461.030  0.02171344  2187.481
     ## 
     ## Tuning parameter 'shrinkage' was held constant at a value of 0.1
-    ## Tuning
-    ##  parameter 'n.minobsinnode' was held constant at a value of 10
+    ## Tuning parameter 'n.minobsinnode' was held constant at
+    ##  a value of 10
     ## RMSE was used to select the optimal model using the smallest value.
-    ## The final values used for the model were n.trees = 50, interaction.depth =
-    ##  1, shrinkage = 0.1 and n.minobsinnode = 10.
+    ## The final values used for the model were n.trees = 50, interaction.depth = 1, shrinkage = 0.1 and n.minobsinnode = 10.
 
 # Comparison
 
 All the models are compared by RMSE on the test set
 
 ``` r
+set.seed(111)
 #compute RMSE of MlrFit
-mlrFitPred <- predict(mlrFit, newdata = newsDataSubsetTest)
-MlrFit<-postResample(mlrFitPred, newsDataSubsetTest$shares)
+mlrFitPred <- predict(mlrFit, newdata = newsDataSubsetTest2)
+MlrFit<-postResample(mlrFitPred, newsDataSubsetTest2$shares)
 MlrFit.RMSE<-MlrFit[1]
 
 #compute RMSE of MlrAllFit
-MlrAllFitPred <- predict(mlrAllFit, newdata = newsDataSubsetTest)
-MlrAllFit<-postResample(MlrAllFitPred, newsDataSubsetTest$shares)
+MlrAllFitPred <- predict(mlrAllFit, newdata = newsDataSubsetTest2)
+MlrAllFit<-postResample(MlrAllFitPred, newsDataSubsetTest2$shares)
 MlrAllFit.RMSE<-MlrAllFit[1]
 
 #compute RMSE of MlrInterFit
-mlrInteractionFitPred <- predict(mlrInteractionFit, newdata = newsDataSubsetTest)
-MlrInterFit<-postResample(mlrInteractionFitPred, newsDataSubsetTest$shares)
+mlrInteractionFitPred <- predict(mlrInteractionFit, newdata = newsDataSubsetTest2)
+MlrInterFit<-postResample(mlrInteractionFitPred, newsDataSubsetTest2$shares)
 MlrInterFit.RMSE<-MlrInterFit[1]
 
 #compute RMSE of RandomForest
-ForestPred <- predict(randomForestFit, newdata = newsDataSubsetTest)
-RandomForest<-postResample(ForestPred, newsDataSubsetTest$shares)
+ForestPred <- predict(randomForestFit, newdata = newsDataSubsetTest2)
+RandomForest<-postResample(ForestPred, newsDataSubsetTest2$shares)
 RandomForest.RMSE<-RandomForest[1]
 
 #compute RMSE of BoostedTree
-BoostPred <- predict(BoostedTreeFit, newdata = newsDataSubsetTest)
-BoostedTree<-postResample(BoostPred, newsDataSubsetTest$shares)
+BoostPred <- predict(BoostedTreeFit, newdata = newsDataSubsetTest2)
+BoostedTree<-postResample(BoostPred, newsDataSubsetTest2$shares)
 BoostedTree.RMSE<-BoostedTree[1]
 
 #Compare Root MSE values
 c(MlrFit=MlrFit.RMSE,MlrAllFit=MlrAllFit.RMSE,MlrInterFit=MlrInterFit.RMSE,RandomForest=RandomForest.RMSE,BoostedTree=BoostedTree.RMSE)
 ```
 
-    ##       MlrFit.RMSE    MlrAllFit.RMSE  MlrInterFit.RMSE RandomForest.RMSE 
-    ##          14987.48          14954.56          14977.18          14891.06 
-    ##  BoostedTree.RMSE 
-    ##          14948.73
+    ##       MlrFit.RMSE    MlrAllFit.RMSE  MlrInterFit.RMSE RandomForest.RMSE  BoostedTree.RMSE 
+    ##          4463.281          4410.126          4440.902          2041.579          4373.125
 
-From the above compare, we can see the smallest RMSE is 8288.572 which
+From the above compare, we can see the smallest RMSE is 5403.120 which
 belong to RandomForest. Therefore, we will choose the Random Forest
 Model.
 
@@ -614,7 +727,7 @@ To automate the project for all of the different news channels, simply
 execute the code chunk below directly to the console. Separate .md files
 will then be created for each news channel type.
 
-``` automation
+``` automate
 #Add column names
 columnNames <- data.frame("lifestyle","entertainment","bus","socmed","tech","world")
 

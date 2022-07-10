@@ -394,7 +394,7 @@ Below is a chuck of code that can be used to automate the reports. In order to a
 
 To automate the project for all of the different news channels, simply execute the code chunk below directly to the console. Separate .md files will then be created for each news channel type.
 
-```{r}
+```automate
 #Add column names
 columnNames <- data.frame("lifestyle","entertainment","bus","socmed","tech","world")
 
