@@ -1,18 +1,18 @@
 ST558 - Project 2
 ================
 Li Wang & Bryan Bittner
-2022-07-08
+2022-07-10
 
--   [Load Packages](#load-packages)
--   [Introduction](#introduction)
--   [Data](#data)
-    -   [Summarizations](#summarizations)
--   [Modeling](#modeling)
-    -   [Linear Regression Model](#linear-regression-model)
-    -   [Random Forest Model](#random-forest-model)
-    -   [Boosted Tree Model](#boosted-tree-model)
--   [Comparison](#comparison)
--   [Automation](#automation)
+  - [Load Packages](#load-packages)
+  - [Introduction](#introduction)
+  - [Data](#data)
+      - [Summarizations](#summarizations)
+  - [Modeling](#modeling)
+      - [Linear Regression Model](#linear-regression-model)
+      - [Random Forest Model](#random-forest-model)
+      - [Boosted Tree Model](#boosted-tree-model)
+  - [Comparison](#comparison)
+  - [Automation](#automation)
 
 ``` r
 rmarkdown::render("Project2.Rmd", 
@@ -48,22 +48,22 @@ published by Mashable in a period of two years.
 Our target variable is the shares variable, and predict variables are
 the following:
 
-publishing_day: Day of the article published n_tokens_title: Number of
-words in the title n_tokens_content: Number of words in the content
-num_self_hrefs: Number of links to other articles published by Mashable
-num_imgs: Number of images num_videos: Number of videos
-average_token_length: Average length of the words in the content
-num_keywords: Number of keywords in the metadata kw_avg_min: Worst
-keyword (avg. shares) kw_avg_avg: Avg. keyword (avg. shares)
-self_reference_avg_shares: Avg. shares of referenced articles in
-Mashable LDA_04: Closeness to LDA topic 4 global_subjectivity: ext
-subjectivity global_rate_positive_words: Rate of positive words in the
-content rate_positive_words: Rate of positive words among non-neutral
-tokens avg_positive_polarity: Avg. polarity of positive words
-min_positive_polarity: Min. polarity of positive words
-avg_negative_polarity: Avg. polarity of negative words
-max_negative_polarity: Max. polarity of negative words
-title_subjectivity: Title subjectivity
+publishing\_day: Day of the article published n\_tokens\_title: Number
+of words in the title n\_tokens\_content: Number of words in the content
+num\_self\_hrefs: Number of links to other articles published by
+Mashable num\_imgs: Number of images num\_videos: Number of videos
+average\_token\_length: Average length of the words in the content
+num\_keywords: Number of keywords in the metadata kw\_avg\_min: Worst
+keyword (avg. shares) kw\_avg\_avg: Avg. keyword (avg. shares)
+self\_reference\_avg\_shares: Avg. shares of referenced articles in
+Mashable LDA\_04: Closeness to LDA topic 4 global\_subjectivity: ext
+subjectivity global\_rate\_positive\_words: Rate of positive words in
+the content rate\_positive\_words: Rate of positive words among
+non-neutral tokens avg\_positive\_polarity: Avg. polarity of positive
+words min\_positive\_polarity: Min. polarity of positive words
+avg\_negative\_polarity: Avg. polarity of negative words
+max\_negative\_polarity: Max. polarity of negative words
+title\_subjectivity: Title subjectivity
 
 The purpose of our analysis is to predict the number of shares in social
 networks (popularity). In this project, we produce some basic (but
@@ -79,23 +79,6 @@ Use a relative path to import the data.
 newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
 head(newsData)
 ```
-
-    ## # A tibble: 6 × 61
-    ##   url                timedelta n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_uniq… num_hrefs
-    ##   <chr>                  <dbl>          <dbl>            <dbl>           <dbl>            <dbl>            <dbl>     <dbl>
-    ## 1 http://mashable.c…       731             12              219           0.664             1.00            0.815         4
-    ## 2 http://mashable.c…       731              9              255           0.605             1.00            0.792         3
-    ## 3 http://mashable.c…       731              9              211           0.575             1.00            0.664         3
-    ## 4 http://mashable.c…       731              9              531           0.504             1.00            0.666         9
-    ## 5 http://mashable.c…       731             13             1072           0.416             1.00            0.541        19
-    ## 6 http://mashable.c…       731             10              370           0.560             1.00            0.698         2
-    ## # … with 53 more variables: num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>, average_token_length <dbl>,
-    ## #   num_keywords <dbl>, data_channel_is_lifestyle <dbl>, data_channel_is_entertainment <dbl>, data_channel_is_bus <dbl>,
-    ## #   data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>, data_channel_is_world <dbl>, kw_min_min <dbl>,
-    ## #   kw_max_min <dbl>, kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>, kw_min_avg <dbl>,
-    ## #   kw_max_avg <dbl>, kw_avg_avg <dbl>, self_reference_min_shares <dbl>, self_reference_max_shares <dbl>,
-    ## #   self_reference_avg_sharess <dbl>, weekday_is_monday <dbl>, weekday_is_tuesday <dbl>, weekday_is_wednesday <dbl>,
-    ## #   weekday_is_thursday <dbl>, weekday_is_friday <dbl>, weekday_is_saturday <dbl>, weekday_is_sunday <dbl>, …
 
 Subset the data. If running the reports by an automated parameter driven
 process, the report will automatically use the parameter passed into
@@ -118,7 +101,7 @@ newsDataSubset <- filter(newsData,.data[[columnName]] == 1)
 ```
 
 Merging the weekdays columns channels as one single column named
-publishing_day.
+publishing\_day.
 
 ``` r
 # Merging the weekdays columns channels as one single column named publishing_day
@@ -135,54 +118,17 @@ newsDataSubset$publishing_day<- as.factor(newsDataSubset$publishing_day)
 head(newsDataSubset)
 ```
 
-    ## # A tibble: 6 × 56
-    ##   url     value publishing_day timedelta n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_uniq…
-    ##   <chr>   <dbl> <fct>              <dbl>          <dbl>            <dbl>           <dbl>            <dbl>            <dbl>
-    ## 1 http:/…     1 monday               731              8              257           0.568             1.00            0.671
-    ## 2 http:/…     1 monday               731              8              218           0.663             1.00            0.688
-    ## 3 http:/…     1 monday               731              9             1226           0.410             1.00            0.617
-    ## 4 http:/…     1 monday               731             10             1121           0.451             1.00            0.629
-    ## 5 http:/…     1 wednesday            729              9              168           0.778             1.00            0.865
-    ## 6 http:/…     1 wednesday            729              9              100           0.760             1.00            0.803
-    ## # … with 47 more variables: num_hrefs <dbl>, num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>,
-    ## #   average_token_length <dbl>, num_keywords <dbl>, data_channel_is_lifestyle <dbl>, data_channel_is_entertainment <dbl>,
-    ## #   data_channel_is_bus <dbl>, data_channel_is_socmed <dbl>, data_channel_is_tech <dbl>, data_channel_is_world <dbl>,
-    ## #   kw_min_min <dbl>, kw_max_min <dbl>, kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>,
-    ## #   kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>, self_reference_min_shares <dbl>,
-    ## #   self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>, is_weekend <dbl>, LDA_00 <dbl>, LDA_01 <dbl>,
-    ## #   LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>, global_subjectivity <dbl>, global_sentiment_polarity <dbl>, …
-
 Here we drop some non-preditive variables:
-url,value,timedelta,data_channel_is_lifestyle,
-data_channel_is_entertainment,data_channel_is_bus,
-data_channel_is_socmed ,data_channel_is_tech,data_channel_is_world
-columns,is_weekend. They won’t contribute anything.
+url,value,timedelta,data\_channel\_is\_lifestyle,
+data\_channel\_is\_entertainment,data\_channel\_is\_bus,
+data\_channel\_is\_socmed
+,data\_channel\_is\_tech,data\_channel\_is\_world columns,is\_weekend.
+They won’t contribute anything.
 
 ``` r
 newsDataSubset<-newsDataSubset%>%select(-c(1,2,4,16:21,34))
 newsDataSubset
 ```
-
-    ## # A tibble: 2,323 × 46
-    ##    publishing_day n_tokens_title n_tokens_content n_unique_tokens n_non_stop_words n_non_stop_unique_tokens num_hrefs
-    ##    <fct>                   <dbl>            <dbl>           <dbl>            <dbl>                    <dbl>     <dbl>
-    ##  1 monday                      8              257           0.568             1.00                    0.671         9
-    ##  2 monday                      8              218           0.663             1.00                    0.688        14
-    ##  3 monday                      9             1226           0.410             1.00                    0.617        10
-    ##  4 monday                     10             1121           0.451             1.00                    0.629        15
-    ##  5 wednesday                   9              168           0.778             1.00                    0.865         6
-    ##  6 wednesday                   9              100           0.760             1.00                    0.803         3
-    ##  7 wednesday                  10             1596           0.420             1.00                    0.632        19
-    ##  8 thursday                    7              518           0.486             1.00                    0.654        11
-    ##  9 friday                      8              358           0.503             1.00                    0.687         4
-    ## 10 friday                      6              358           0.622             1.00                    0.777        24
-    ## # … with 2,313 more rows, and 39 more variables: num_self_hrefs <dbl>, num_imgs <dbl>, num_videos <dbl>,
-    ## #   average_token_length <dbl>, num_keywords <dbl>, kw_min_min <dbl>, kw_max_min <dbl>, kw_avg_min <dbl>,
-    ## #   kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>, kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>,
-    ## #   self_reference_min_shares <dbl>, self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>, LDA_00 <dbl>,
-    ## #   LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>, global_subjectivity <dbl>, global_sentiment_polarity <dbl>,
-    ## #   global_rate_positive_words <dbl>, global_rate_negative_words <dbl>, rate_positive_words <dbl>,
-    ## #   rate_negative_words <dbl>, avg_positive_polarity <dbl>, min_positive_polarity <dbl>, max_positive_polarity <dbl>, …
 
 ## Summarizations
 
@@ -258,11 +204,6 @@ be something we will have to investigate further.
 newsDataSubset %>% summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-    ## # A tibble: 1 × 4
-    ##     avg   med       var    sd
-    ##   <dbl> <dbl>     <dbl> <dbl>
-    ## 1 3629.  2100 30516422. 5524.
-
 Looking at the different columns in the dataset, there are two that
 stand out. Generally speaking, people probably aren’t going to look at
 articles that don’t have images or videos. Here are the summary stats
@@ -272,21 +213,6 @@ for the articles grouped on the number of images in the article.
 newsDataSubset %>% group_by(num_imgs) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
-
-    ## # A tibble: 50 × 5
-    ##    num_imgs   avg   med        var     sd
-    ##       <dbl> <dbl> <dbl>      <dbl>  <dbl>
-    ##  1        0 3055.  1700  17828581.  4222.
-    ##  2        1 3651.  2200  34874132.  5905.
-    ##  3        2 4292.  2650  36205098.  6017.
-    ##  4        3 3569.  2550  12934298.  3596.
-    ##  5        4 3848.  2600  22695696.  4764.
-    ##  6        5 2701.  1950   4185049.  2046.
-    ##  7        6 5119.  2300 118914956. 10905.
-    ##  8        7 6168.  2400  87941334.  9378.
-    ##  9        8 4446.  2400  35148721.  5929.
-    ## 10        9 6269.  2100  70103658.  8373.
-    ## # … with 40 more rows
 
 As we can see from the above table, the largest avg of shares is with 27
 images, and the least avg of shares is with 23 images. Therefore, the
@@ -299,27 +225,12 @@ newsDataSubset %>% group_by(num_videos) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-    ## # A tibble: 32 × 5
-    ##    num_videos   avg   med       var    sd
-    ##         <dbl> <dbl> <dbl>     <dbl> <dbl>
-    ##  1          0 3682.  2300 24349855. 4935.
-    ##  2          1 3905.  2100 69149311. 8316.
-    ##  3          2 2476.  1600  6813190. 2610.
-    ##  4          3 2130.  1400  3088695. 1757.
-    ##  5          4 3205   2450  9882605. 3144.
-    ##  6          5 3195.  1750 14902664. 3860.
-    ##  7          6 3025.  1400 18379209. 4287.
-    ##  8          7 1762.  1400   738715.  859.
-    ##  9          8 2464.  1800  2815354. 1678.
-    ## 10          9 2791.  1900  9322845. 3053.
-    ## # … with 22 more rows
-
 As we can see from the above table, the largest avg of shares is with 15
 videos, and the least avg of shares is with 28 videos Therefore, the
 number of videos variable is affect shares, we will keep this variable.
 
-A plot with the number of shares on the y-axis and n_tokens_title on the
-x-axis is created:
+A plot with the number of shares on the y-axis and n\_tokens\_title on
+the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubset, aes(x = n_tokens_title, y = shares))
@@ -329,10 +240,10 @@ g + geom_point()+labs(title = "Plot of shares VS n_tokens_title")
 ![](socmed_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 From the above plot, we can see that the most shares is with 6-15 words
-in the title. Therefore, we will keep n_tokens_title variable.
+in the title. Therefore, we will keep n\_tokens\_title variable.
 
-A plot with the number of shares on the y-axis and publishing_day on the
-x-axis is created:
+A plot with the number of shares on the y-axis and publishing\_day on
+the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubset, aes(x = publishing_day, y = shares))
@@ -344,9 +255,9 @@ g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 From the above plot, we can see that the best popular articles are
 usually posted on Monday, Tuesday, and Wednesday. Articles is less
 popularity which are published on Sunday and Saturday. Therefore, we
-will keep publishing_day.
+will keep publishing\_day.
 
-A plot with the number of shares on the y-axis and rate_positive_words
+A plot with the number of shares on the y-axis and rate\_positive\_words
 on the x-axis is created:
 
 ``` r
@@ -357,10 +268,10 @@ g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
 ![](socmed_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 From the above plot, we can see that the best popular articles are with
-0.5-0.9 rate_positive_words. Therefore, the variable rate_positive_words
-effect to shares, we will keep this variable.
+0.5-0.9 rate\_positive\_words. Therefore, the variable
+rate\_positive\_words effect to shares, we will keep this variable.
 
-A plot with the number of shares on the y-axis and n_tokens_content on
+A plot with the number of shares on the y-axis and n\_tokens\_content on
 the x-axis is created:
 
 ``` r
@@ -372,11 +283,11 @@ g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
 
 From the above plot, we can see that the number of words in the article
 less than 1500 words are with good shares. The lesser the better.
-Therefore, the variable n_tokens_content effect to shares, we will keep
-this variable.
+Therefore, the variable n\_tokens\_content effect to shares, we will
+keep this variable.
 
-A plot with the number of shares on the y-axis and average_token_length
-on the x-axis is created:
+A plot with the number of shares on the y-axis and
+average\_token\_length on the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubset, aes(x = average_token_length, y = shares))
@@ -386,7 +297,7 @@ g + geom_point()+labs(title = "Plot of shares VS average_token_length")
 ![](socmed_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 From the above plot, we can see that the almost shares are with 4-6
-length word. Therefore, the variable average_token_length effect to
+length word. Therefore, the variable average\_token\_length effect to
 shares, we will keep this variable.
 
 Correlation matrix plot is generated:
@@ -402,31 +313,33 @@ corrplot(corr,tl.cex=0.5)
 By the above correlation matrix plot, we can see these variables are
 strongly correlated:
 
--   title_subjectivity, abs_title_sentiment_polarity,
-    abs_title_subjectivity, title_sentiment_polarity
--   avg_negative_polarity, min_negative_polarity
--   max_positive_polarity, avg_positive_polarity
--   global_rate_negative_words, rate_negative_words,rate_positive_words
--   global_sentiment_polarity, rate_negative_words, rate_positive_words
--   LDA_03,LDA_04
--   LDA_00,LDA_04
--   self_reference_max_shares, self_reference_avg_shares,
-    self_reference_min_shares
--   kw_max_avg, kw_avg_avg
--   kw_min_avg,kw_avg_avg,kw_min_max
--   kw_avg_max,kw_avg_avg,kw_max_max
--   kw_avg_min,kw_avg_max
--   kw_max_min,kw_avg_min,kw_min_min
--   kw_min_min,kw_avg_max
--   num_keywords,LDA_01
--   num_keywords,LDA_02
--   num_hrefs, num_imgs
--   n_non_stop_unique_tokens, num_imgs
--   n_non_stop_words, n_non_stop_unique_tokens
--   n_unique_tokens,n_non_stop_unique_tokens
--   n_unique_tokens, n_non_stop_words, n_tokens_content
--   n_tokens_content, n_non_stop_unique_tokens
--   n_tokens_content, num_hrefs
+  - title\_subjectivity, abs\_title\_sentiment\_polarity,
+    abs\_title\_subjectivity, title\_sentiment\_polarity
+  - avg\_negative\_polarity, min\_negative\_polarity
+  - max\_positive\_polarity, avg\_positive\_polarity
+  - global\_rate\_negative\_words,
+    rate\_negative\_words,rate\_positive\_words
+  - global\_sentiment\_polarity, rate\_negative\_words,
+    rate\_positive\_words
+  - LDA\_03,LDA\_04
+  - LDA\_00,LDA\_04
+  - self\_reference\_max\_shares, self\_reference\_avg\_shares,
+    self\_reference\_min\_shares
+  - kw\_max\_avg, kw\_avg\_avg
+  - kw\_min\_avg,kw\_avg\_avg,kw\_min\_max
+  - kw\_avg\_max,kw\_avg\_avg,kw\_max\_max
+  - kw\_avg\_min,kw\_avg\_max
+  - kw\_max\_min,kw\_avg\_min,kw\_min\_min
+  - kw\_min\_min,kw\_avg\_max
+  - num\_keywords,LDA\_01
+  - num\_keywords,LDA\_02
+  - num\_hrefs, num\_imgs
+  - n\_non\_stop\_unique\_tokens, num\_imgs
+  - n\_non\_stop\_words, n\_non\_stop\_unique\_tokens
+  - n\_unique\_tokens,n\_non\_stop\_unique\_tokens
+  - n\_unique\_tokens, n\_non\_stop\_words, n\_tokens\_content
+  - n\_tokens\_content, n\_non\_stop\_unique\_tokens
+  - n\_tokens\_content, num\_hrefs
 
 These are strongly correlated and linearly dependent which makes us to
 assume that these features are so linearly dependent that any one of the
@@ -468,7 +381,7 @@ interactive and or higher order terms that will conform to a more
 complex relationship.
 
 For the first linear model example, we can try a model using just the
-“num_imgs” and “num_videos” as our predictors.
+“num\_imgs” and “num\_videos” as our predictors.
 
 ``` r
 set.seed(111)
@@ -523,8 +436,8 @@ mlrAllFit
     ## 
     ## Tuning parameter 'intercept' was held constant at a value of TRUE
 
-Try a model using just the num_imgs + num_videos + kw_avg_avg +
-num_imgs\*kw_avg_avg as our predictors.
+Try a model using just the num\_imgs + num\_videos + kw\_avg\_avg +
+num\_imgs\*kw\_avg\_avg as our predictors.
 
 ``` r
 set.seed(111)
@@ -639,10 +552,11 @@ BoostedTreeFit
     ##   3                  150      5415.123  0.03291051  2671.651
     ## 
     ## Tuning parameter 'shrinkage' was held constant at a value of 0.1
-    ## Tuning parameter 'n.minobsinnode' was held constant at
-    ##  a value of 10
+    ## Tuning
+    ##  parameter 'n.minobsinnode' was held constant at a value of 10
     ## RMSE was used to select the optimal model using the smallest value.
-    ## The final values used for the model were n.trees = 50, interaction.depth = 3, shrinkage = 0.1 and n.minobsinnode = 10.
+    ## The final values used for the model were n.trees = 50, interaction.depth =
+    ##  3, shrinkage = 0.1 and n.minobsinnode = 10.
 
 # Comparison
 
@@ -678,8 +592,10 @@ BoostedTree.RMSE<-BoostedTree[1]
 c(MlrFit=MlrFit.RMSE,MlrAllFit=MlrAllFit.RMSE,MlrInterFit=MlrInterFit.RMSE,RandomForest=RandomForest.RMSE,BoostedTree=BoostedTree.RMSE)
 ```
 
-    ##       MlrFit.RMSE    MlrAllFit.RMSE  MlrInterFit.RMSE RandomForest.RMSE  BoostedTree.RMSE 
-    ##          5403.107          5387.533          5374.365          5327.329          5226.738
+    ##       MlrFit.RMSE    MlrAllFit.RMSE  MlrInterFit.RMSE RandomForest.RMSE 
+    ##          5403.107          5387.533          5374.365          5327.329 
+    ##  BoostedTree.RMSE 
+    ##          5226.738
 
 From the above compare, we can see the smallest RMSE is 8288.572 which
 belong to RandomForest. Therefore, we will choose the Random Forest

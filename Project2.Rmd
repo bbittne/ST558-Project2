@@ -47,32 +47,33 @@ library(gbm)
 
 # Introduction
 
-This data set summarizes a heterogeneous set of features about articles published by Mashable in a period of two years.
+This [online News Popularity Data Set](https://archive.ics.uci.edu/ml/datasets/Online+News+Popularity) summarizes a heterogeneous set of features about articles published by Mashable in a period of two years.
 
-Our target variable is the shares variable, and predict variables are the following:
+Our target variable is the shares variable(Number of shares ), and predict variables are the following:
 
-publishing_day: Day of the article published
-n_tokens_title: Number of words in the title
-n_tokens_content: Number of words in the content
-num_self_hrefs: Number of links to other articles published by Mashable
-num_imgs: Number of images
-num_videos:  Number of videos
-average_token_length: Average length of the words in the content
-num_keywords: Number of keywords in the metadata
-kw_avg_min: Worst keyword (avg. shares)
-kw_avg_avg: Avg. keyword (avg. shares)
-self_reference_avg_shares: Avg. shares of referenced articles in Mashable
-LDA_04: Closeness to LDA topic 4
-global_subjectivity: ext subjectivity
-global_rate_positive_words: Rate of positive words in the content
-rate_positive_words: Rate of positive words among non-neutral tokens
-avg_positive_polarity: Avg. polarity of positive words
-min_positive_polarity: Min. polarity of positive words
-avg_negative_polarity: Avg. polarity of negative words
-max_negative_polarity: Max. polarity of negative words
-title_subjectivity: Title subjectivity
++ publishing_day: Day of the article published
++ n_tokens_title: Number of words in the title
++ n_tokens_content: Number of words in the content
++ num_self_hrefs: Number of links to other articles published by Mashable
++ num_imgs: Number of images
++ num_videos:  Number of videos
++ average_token_length: Average length of the words in the content
++ num_keywords: Number of keywords in the metadata
++ kw_avg_min: Worst keyword (avg. shares)
++ kw_avg_avg: Avg. keyword (avg. shares)
++ self_reference_avg_shares: Avg. shares of referenced articles in Mashable
++ LDA_04: Closeness to LDA topic 4
++ global_subjectivity: ext subjectivity
++ global_rate_positive_words: Rate of positive words in the content
++ rate_positive_words: Rate of positive words among non-neutral tokens
++ avg_positive_polarity: Avg. polarity of positive words
++ min_positive_polarity: Min. polarity of positive words
++ avg_negative_polarity: Avg. polarity of negative words
++ max_negative_polarity: Max. polarity of negative words
++ title_subjectivity: Title subjectivity
 
-The purpose of our analysis is to predict the number of shares in social networks (popularity). In this project, we produce some basic (but meaningful) summary statistics and plots about the training data, and fit a linear regression model and an ensemble tree-based model for predicting the number of shares.
+The purpose of our analysis is to predict the number of shares in social networks (popularity). In this project, we produce some basic summary statistics and plots about the training data, and fit a linear regression model and an ensemble tree-based model.
+
 
 # Data
 
@@ -124,95 +125,112 @@ newsDataSubset<-newsDataSubset%>%select(-c(1,2,4,16:21,34))
 newsDataSubset
 ```
 
-## Summarizations
+# Data Train/Test Split
 
+Lets set up our Train/Test split. This will allow us to determine the model fit using a subset of data called Training, while saving the remainder of the data called Test to test our model predictions with.
+
+```{r}
+set.seed(111)
+train <- sample(1:nrow(newsDataSubset),size=nrow(newsDataSubset)*0.7)
+test <- dplyr::setdiff(1:nrow(newsDataSubset),train)
+
+newsDataSubsetTrain <- newsDataSubset[train,]
+newsDataSubsetTest <- newsDataSubset[test,]
+```
+
+# Summarizations
+
+## Data structure and basic summary statistics
 Start with the data structure and basic summary statistics for the 'shares' field.
 
 ```{r}
 # data structure
-str(newsDataSubset)
+str(newsDataSubsetTrain)
 ```
 
 ```{r}
 # data summary
-summary(newsDataSubset$shares)
+summary(newsDataSubsetTrain$shares)
 ```
 
 Now lets show the Mean, Median, Variance, and Standard Deviation. Notice the Variance and Standard Deviation are both extremely high. This might be something we will have to investigate further.
 
 ```{r}
-newsDataSubset %>% summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
+newsDataSubsetTrain %>% summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
 Looking at the different columns in the dataset, there are two that stand out. Generally speaking, people probably aren't going to look at articles that don't have images or videos. Here are the summary stats for the articles grouped on the number of images in the article.
 
 ```{r}
-newsDataSubset %>% group_by(num_imgs) %>%
+newsDataSubsetTrain %>% group_by(num_imgs) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-As we can see from the above table, the largest avg of shares is with 27 images, and the least avg of shares is with 23 images. Therefore, the number of images variable is affect shares, we will keep this variable.
+As we can see from the above table, the largest avg of shares is with 28 images, and the least avg of shares is with 23 images. Therefore, the number of images variable affects shares, and we will keep this variable.
 
 Here are the summary stats for articles with videos.
 ```{r}
-newsDataSubset %>% group_by(num_videos) %>%
+newsDataSubsetTrain %>% group_by(num_videos) %>%
 summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(shares))
 ```
 
-As we can see from the above table, the largest avg of shares is with 15 videos, and the least avg of shares is with 28 videos Therefore, the number of videos variable is affect shares, we will keep this variable.
+As we can see from the above table, the largest avg of shares is with 15 videos, and the least avg of shares is with 28 videos Therefore, the number of videos variable affects shares, and we will keep this variable.
+
+
+## Plots
 
 A plot with the number of shares on the y-axis and n_tokens_title on the x-axis is created:
 
 ```{r}
-g <- ggplot(newsDataSubset, aes(x = n_tokens_title, y = shares))
+g <- ggplot(newsDataSubsetTrain, aes(x = n_tokens_title, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_title")
 ```
 
-From the above plot, we can see that the most shares is with 6-15 words in the title. Therefore, we will keep n_tokens_title variable.
+From the above plot, we can see that the most shares is with 6-15 words in the title. Therefore, the number of words in the title affects shares, and we will keep n_tokens_title variable.
 
 
 A plot with the number of shares on the y-axis and publishing_day on the x-axis is created:
 
 ```{r}
-g <- ggplot(newsDataSubset, aes(x = publishing_day, y = shares))
+g <- ggplot(newsDataSubsetTrain, aes(x = publishing_day, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 
 ```
 
 
-From the above plot, we can see that the best popular articles are usually posted on Monday, Tuesday, and Wednesday. Articles is less popularity which are published on Sunday and Saturday. Therefore, we will keep publishing_day.
+From the above plot, we can see that the best popular articles are usually posted on Monday, Tuesday, and Wednesday. Articles is less popularity which are published on Sunday and Saturday. Therefore, the publishing_day affects shares, and we will keep publishing_day.
 
 A plot with the number of shares on the y-axis and rate_positive_words on the x-axis is created:
 
 ```{r}
-g <- ggplot(newsDataSubset, aes(x = rate_positive_words, y = shares))
+g <- ggplot(newsDataSubsetTrain, aes(x = rate_positive_words, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
 ```
 
-From the above plot, we can see that the best popular articles are with 0.5-0.9 rate_positive_words. Therefore, the variable rate_positive_words effect to shares, we will keep this variable.
+From the above plot, we can see that the best popular articles are with 0.5-0.9 rate_positive_words. Therefore, the variable rate_positive_words effects shares, and we will keep this variable.
 
 A plot with the number of shares on the y-axis and n_tokens_content on the x-axis is created:
 
 ```{r}
-g <- ggplot(newsDataSubset, aes(x = n_tokens_content, y = shares))
+g <- ggplot(newsDataSubsetTrain, aes(x = n_tokens_content, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
 ```
 
-From the above plot, we can see that the number of words in the article less than 1500 words are with good shares. The lesser the better. Therefore, the variable n_tokens_content effect to shares, we will keep this variable.
+From the above plot, we can see that the number of words in the article less than 2000 words are with good shares. The less the better. Therefore, the variable n_tokens_content effects shares, and we will keep this variable.
 
 A plot with the number of shares on the y-axis and average_token_length on the x-axis is created:
 
 ```{r}
-g <- ggplot(newsDataSubset, aes(x = average_token_length, y = shares))
+g <- ggplot(newsDataSubsetTrain, aes(x = average_token_length, y = shares))
 g + geom_point()+labs(title = "Plot of shares VS average_token_length")
 ```
 
-From the above plot, we can see that the almost shares are with 4-6 length word.  Therefore, the variable average_token_length effect to shares, we will keep this variable.
+From the above plot, we can see that the almost shares are with 4-6 length word.  Therefore, the variable average_token_length effects shares, and we will keep this variable.
 
 Correlation matrix plot is generated:
 ```{r}
-newsDataSubset1<-select(newsDataSubset,-publishing_day)
-corr=cor(newsDataSubset1, method = c("spearman"))
+newsDataSubsetTrain1<-select(newsDataSubsetTrain,-publishing_day)
+corr=cor(newsDataSubsetTrain1, method = c("spearman"))
 corrplot(corr,tl.cex=0.5)
 ```
 
@@ -242,27 +260,21 @@ By the above correlation matrix plot, we can see these variables are strongly co
 + n_tokens_content, n_non_stop_unique_tokens
 + n_tokens_content, num_hrefs
 
-These are strongly correlated and linearly dependent which makes us to assume that these features are so linearly dependent that any one of the strong correlated feature can be used and excluding the other features won’t affect the model and will be indirectly helpful in our model by not allowing to do overfitting.
+These are strongly correlated which makes us to assume that these features are so linearly dependent that any one of the strong correlated feature can be used and excluding the other features with high correlation.
+
+
+## Feature selection
 
 Let's do feature selection:
   
 ```{r}
-newsDataSubset2<-select(newsDataSubset,-abs_title_sentiment_polarity, -abs_title_subjectivity, -title_sentiment_polarity,-min_negative_polarity,-max_positive_polarity,-rate_negative_words,-global_rate_negative_words,-global_sentiment_polarity,-LDA_03,-LDA_00,-self_reference_max_shares,-self_reference_min_shares,-kw_max_avg,-kw_min_avg,-kw_min_max,-kw_avg_max,-kw_max_max,-kw_max_min,-kw_min_min,-LDA_01,-LDA_02,-num_hrefs,-n_non_stop_unique_tokens,-n_unique_tokens,-n_non_stop_words)
+newsDataSubsetTrain2<-select(newsDataSubsetTrain,-abs_title_sentiment_polarity, -abs_title_subjectivity, -title_sentiment_polarity,-min_negative_polarity,-max_positive_polarity,-rate_negative_words,-global_rate_negative_words,-global_sentiment_polarity,-LDA_03,-LDA_00,-self_reference_max_shares,-self_reference_min_shares,-kw_max_avg,-kw_min_avg,-kw_min_max,-kw_avg_max,-kw_max_max,-kw_max_min,-kw_min_min,-LDA_01,-LDA_02,-num_hrefs,-n_non_stop_unique_tokens,-n_unique_tokens,-n_non_stop_words)
+
+newsDataSubsetTest2<-select(newsDataSubsetTrain,-abs_title_sentiment_polarity, -abs_title_subjectivity, -title_sentiment_polarity,-min_negative_polarity,-max_positive_polarity,-rate_negative_words,-global_rate_negative_words,-global_sentiment_polarity,-LDA_03,-LDA_00,-self_reference_max_shares,-self_reference_min_shares,-kw_max_avg,-kw_min_avg,-kw_min_max,-kw_avg_max,-kw_max_max,-kw_max_min,-kw_min_min,-LDA_01,-LDA_02,-num_hrefs,-n_non_stop_unique_tokens,-n_unique_tokens,-n_non_stop_words)
 ```
 
 
 # Modeling
-
-Before we do any modeling, lets set up our Train/Test split. This will allow us to determine the model fit using a subset of data called Training, while saving the remainder of the data called Test to test our model predictions with.
-
-```{r}
-set.seed(111)
-train <- sample(1:nrow(newsDataSubset2),size=nrow(newsDataSubset2)*0.7)
-test <- dplyr::setdiff(1:nrow(newsDataSubset2),train)
-
-newsDataSubsetTrain <- newsDataSubset2[train,]
-newsDataSubsetTest <- newsDataSubset2[test,]
-```
 
 ## Linear Regression Model
 
@@ -274,7 +286,7 @@ For the first linear model example, we can try a model using just the "num_imgs"
 set.seed(111)
 #Fit a  multiple linear regression model using just the "num_imgs" and "num_videos" as our predictors. 
 mlrFit <- train(shares ~ num_imgs + num_videos, 
-                data = newsDataSubsetTrain, 
+                data = newsDataSubsetTrain2, 
                 method="lm",
                 trControl=trainControl(method="cv",number=5))
 mlrFit
@@ -286,7 +298,7 @@ Next we can try a linear model using all of the fields as a predictor variables.
 #Fit a  multiple linear regression model using all of the fields as a predictor variables.
 set.seed(111)
 mlrAllFit <- train(shares ~ ., 
-                data = newsDataSubsetTrain, 
+                data = newsDataSubsetTrain2, 
                 method="lm",
                 trControl=trainControl(method="cv",number=5))
 mlrAllFit
@@ -298,7 +310,7 @@ Try a model using just the num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_
 set.seed(111)
 #Fit a  multiple linear regression model with num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg. 
 mlrInteractionFit <- train(shares ~ num_imgs + num_videos + kw_avg_avg + num_imgs*kw_avg_avg, 
-                data = newsDataSubsetTrain, 
+                data = newsDataSubsetTrain2, 
                 method="lm",
                 trControl=trainControl(method="cv",number=5))
 mlrInteractionFit
@@ -312,7 +324,7 @@ The Random Forest Model is an example of an ensemble based model. Instead of tra
 ```{r}
 set.seed(111)
 randomForestFit <- train(shares ~ ., 
-                         data = newsDataSubsetTrain, 
+                         data = newsDataSubsetTrain2, 
                          method="rf",
                          preProcess=c("center","scale"),
                          trControl=trainControl(method="cv",number=5),
@@ -330,7 +342,7 @@ Boosted Regression Tree uses the boosting method in which the input data are wei
 ```{r}
 set.seed(111)
 BoostedTreeFit <- train(shares ~ ., 
-                         data = newsDataSubsetTrain,
+                         data = newsDataSubsetTrain2,
                          distribution = "gaussian",
                          method="gbm",
                          trControl=trainControl(method="cv",number=5),
@@ -343,36 +355,37 @@ BoostedTreeFit
 All the models are compared by RMSE on the test set
 
 ```{r}
+set.seed(111)
 #compute RMSE of MlrFit
-mlrFitPred <- predict(mlrFit, newdata = newsDataSubsetTest)
-MlrFit<-postResample(mlrFitPred, newsDataSubsetTest$shares)
+mlrFitPred <- predict(mlrFit, newdata = newsDataSubsetTest2)
+MlrFit<-postResample(mlrFitPred, newsDataSubsetTest2$shares)
 MlrFit.RMSE<-MlrFit[1]
 
 #compute RMSE of MlrAllFit
-MlrAllFitPred <- predict(mlrAllFit, newdata = newsDataSubsetTest)
-MlrAllFit<-postResample(MlrAllFitPred, newsDataSubsetTest$shares)
+MlrAllFitPred <- predict(mlrAllFit, newdata = newsDataSubsetTest2)
+MlrAllFit<-postResample(MlrAllFitPred, newsDataSubsetTest2$shares)
 MlrAllFit.RMSE<-MlrAllFit[1]
 
 #compute RMSE of MlrInterFit
-mlrInteractionFitPred <- predict(mlrInteractionFit, newdata = newsDataSubsetTest)
-MlrInterFit<-postResample(mlrInteractionFitPred, newsDataSubsetTest$shares)
+mlrInteractionFitPred <- predict(mlrInteractionFit, newdata = newsDataSubsetTest2)
+MlrInterFit<-postResample(mlrInteractionFitPred, newsDataSubsetTest2$shares)
 MlrInterFit.RMSE<-MlrInterFit[1]
 
 #compute RMSE of RandomForest
-ForestPred <- predict(randomForestFit, newdata = newsDataSubsetTest)
-RandomForest<-postResample(ForestPred, newsDataSubsetTest$shares)
+ForestPred <- predict(randomForestFit, newdata = newsDataSubsetTest2)
+RandomForest<-postResample(ForestPred, newsDataSubsetTest2$shares)
 RandomForest.RMSE<-RandomForest[1]
 
 #compute RMSE of BoostedTree
-BoostPred <- predict(BoostedTreeFit, newdata = newsDataSubsetTest)
-BoostedTree<-postResample(BoostPred, newsDataSubsetTest$shares)
+BoostPred <- predict(BoostedTreeFit, newdata = newsDataSubsetTest2)
+BoostedTree<-postResample(BoostPred, newsDataSubsetTest2$shares)
 BoostedTree.RMSE<-BoostedTree[1]
 
 #Compare Root MSE values
 c(MlrFit=MlrFit.RMSE,MlrAllFit=MlrAllFit.RMSE,MlrInterFit=MlrInterFit.RMSE,RandomForest=RandomForest.RMSE,BoostedTree=BoostedTree.RMSE)
 ```
 
-From the above compare, we can see the smallest RMSE is 8288.572 which belong to RandomForest. Therefore, we will choose the Random Forest Model.
+From the above compare, we can see the smallest RMSE is 5403.120 which belong to RandomForest. Therefore, we will choose the Random Forest Model.
 
 
 # Automation
@@ -381,7 +394,7 @@ Below is a chuck of code that can be used to automate the reports. In order to a
 
 To automate the project for all of the different news channels, simply execute the code chunk below directly to the console. Separate .md files will then be created for each news channel type.
 
-``` Automation
+```{r}
 #Add column names
 columnNames <- data.frame("lifestyle","entertainment","bus","socmed","tech","world")
 
