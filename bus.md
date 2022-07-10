@@ -88,7 +88,7 @@ regression model and an ensemble tree-based model.
 Use a relative path to import the data.
 
 ``` r
-newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv")
+newsData<-read_csv(file="../Datasets/OnlineNewsPopularity.csv",show_col_types = FALSE)
 head(newsData)
 ```
 
@@ -317,10 +317,9 @@ summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(s
     ## 10        9 3152.  1800    4461199.  2112.
     ## # … with 28 more rows
 
-As we can see from the above table, the largest avg of shares is with 28
-images, and the least avg of shares is with 23 images. Therefore, the
-number of images variable affects shares, and we will keep this
-variable.
+As we can see from the above table, the number of shares tend to
+increase as the number of images increases. Therefore, the number of
+images variable affects shares, and we will keep this variable.
 
 Here are the summary stats for articles with videos.
 
@@ -344,15 +343,14 @@ summarise(avg = mean(shares), med = median(shares), var = var(shares), sd = sd(s
     ## 10          9   776    776         NA     NA 
     ## # … with 16 more rows
 
-As we can see from the above table, the largest avg of shares is with 15
-videos, and the least avg of shares is with 28 videos Therefore, the
-number of videos variable affects shares, and we will keep this
-variable.
+As we can see from the above table, number of shares tend to increase as
+the number of videos increases. Therefore, the number of videos variable
+affects shares, and we will keep this variable.
 
 ## Plots
 
-A plot with the number of shares on the y-axis and n_tokens_title on the
-x-axis is created:
+A plot with the number of shares on the y-axis and number of words in
+the title (n_tokens_title) on the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubsetTrain, aes(x = n_tokens_title, y = shares))
@@ -361,12 +359,13 @@ g + geom_point()+labs(title = "Plot of shares VS n_tokens_title")
 
 ![](bus_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
-From the above plot, we can see that the most shares is with 6-15 words
-in the title. Therefore, the number of words in the title affects
-shares, and we will keep n_tokens_title variable.
+The number of shares will vary depending on on the channel type. But
+there is clearly a relationship between the number of words in the title
+and the number of shares. Therefore, the number of words in the title
+affects shares, and we will keep n_tokens_title variable.
 
-A plot with the number of shares on the y-axis and publishing_day on the
-x-axis is created:
+A plot with the number of shares on the y-axis and publishing day
+(publishing_day) on the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubsetTrain, aes(x = publishing_day, y = shares))
@@ -375,13 +374,15 @@ g + geom_point()+labs(title = "Plot of shares VS publishing_day")
 
 ![](bus_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
-From the above plot, we can see that the best popular articles are
-usually posted on Monday, Tuesday, and Wednesday. Articles is less
-popularity which are published on Sunday and Saturday. Therefore, the
+Looking at the plot, some of the days will have a higher number of
+shares and some of the days will have a lower number of shares. The days
+with the higher shares will vary depending on the channel. For example,
+it makes sense that some of the business related channels have a higher
+share rate during the work week than the weekend. Therefore, the
 publishing_day affects shares, and we will keep publishing_day.
 
-A plot with the number of shares on the y-axis and rate_positive_words
-on the x-axis is created:
+A plot with the number of shares on the y-axis and rate of positive
+words (rate_positive_words) on the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubsetTrain, aes(x = rate_positive_words, y = shares))
@@ -390,12 +391,13 @@ g + geom_point()+labs(title = "Plot of shares VS rate_positive_words")
 
 ![](bus_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
-From the above plot, we can see that the best popular articles are with
-0.5-0.9 rate_positive_words. Therefore, the variable rate_positive_words
-effects shares, and we will keep this variable.
+Looking across the plots for each of the channels, there is a
+correlation between using positive words and a higher share number.
+Therefore, the variable rate_positive_words effects shares, and we will
+keep this variable.
 
-A plot with the number of shares on the y-axis and n_tokens_content on
-the x-axis is created:
+A plot with the number of shares on the y-axis and number of words in
+the content (n_tokens_content) on the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubsetTrain, aes(x = n_tokens_content, y = shares))
@@ -404,13 +406,14 @@ g + geom_point()+labs(title = "Plot of shares VS n_tokens_content")
 
 ![](bus_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
-From the above plot, we can see that the number of words in the article
-less than 2000 words are with good shares. The less the better.
-Therefore, the variable n_tokens_content effects shares, and we will
-keep this variable.
+For each of the channel types, it is easy to see that the number of
+shares will decrease as the number of words in the article increases.
+For most channel types, the highest shares are with the articles that
+have less than 2000 words. Therefore, the variable n_tokens_content
+effects shares, and we will keep this variable.
 
-A plot with the number of shares on the y-axis and average_token_length
-on the x-axis is created:
+A plot with the number of shares on the y-axis and average word length
+(average_token_length) on the x-axis is created:
 
 ``` r
 g <- ggplot(newsDataSubsetTrain, aes(x = average_token_length, y = shares))
@@ -419,9 +422,9 @@ g + geom_point()+labs(title = "Plot of shares VS average_token_length")
 
 ![](bus_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
-From the above plot, we can see that the almost shares are with 4-6
-length word. Therefore, the variable average_token_length effects
-shares, and we will keep this variable.
+From the above plot, we can see that the most shares contain 4-6 length
+words. Therefore, the variable average_token_length effects shares, and
+we will keep this variable.
 
 Correlation matrix plot is generated:
 
